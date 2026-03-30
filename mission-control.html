@@ -156,6 +156,7 @@
         <span id="status-text">Disconnected</span>
         <button id="connect-btn" class="btn btn-connect" onclick="toggleConnection()">⚡ Connect via BLE</button>
     </div>
+    <div id="last-updated" style="font-size: 0.85rem; color: #64748b; margin-top: 10px;"></div>
 </header>
 
 <div class="tabs">
@@ -349,22 +350,6 @@ async function toggleConnection() {
     else await connectBLE();
 }
 
-// ════════════════════════════════════════════════════════════
-// BLUETOOTH (BLE) CONNECTION
-// ════════════════════════════════════════════════════════════
-const BLE_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
-const BLE_CHAR_UUID    = '0000ffe1-0000-1000-8000-00805f9b34fb';
-
-let bleDevice = null;
-let bleServer = null;
-let bleCharacteristic = null;
-let isConnected = false;
-
-async function toggleConnection() {
-    if (isConnected) await disconnectBLE();
-    else await connectBLE();
-}
-
 async function connectBLE() {
     if (!navigator.bluetooth) {
         alert("Web Bluetooth is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
@@ -374,7 +359,7 @@ async function connectBLE() {
     try {
         logTerminal("Requesting Bluetooth Device...");
         
-        // UPDATED: Filter specifically for names starting with "Bittle" or "bittle"
+        // Filter specifically for names starting with "Bittle" or "bittle"
         bleDevice = await navigator.bluetooth.requestDevice({
             filters: [
                 { namePrefix: 'Bittle' },
@@ -510,8 +495,21 @@ async function runMission() {
     btnGo.innerHTML = '▶ RUN CODE';
 }
 
+// ════════════════════════════════════════════════════════════
+// INITIALIZATION
+// ════════════════════════════════════════════════════════════
 // Init default tab
 switchTab('g2');
+
+// Display Last Updated Timestamp
+const lastUpdatedElement = document.getElementById('last-updated');
+const modifiedDate = new Date(document.lastModified);
+const options = { 
+    year: 'numeric', month: 'short', day: 'numeric', 
+    hour: '2-digit', minute: '2-digit', timeZoneName: 'short' 
+};
+lastUpdatedElement.innerText = "Last Updated: " + modifiedDate.toLocaleString(undefined, options);
+
 </script>
 </body>
 </html>
