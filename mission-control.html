@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bittle Mission Control 🚀</title>
+    <style>
+        :root {
+            --primary:    #4cc9f0;
+            --secondary:  #4895ef;
+            --accent:     #f72585;
+            --success:    #4caf50;
+            --danger:     #ef4444;
+            --warning:    #f59e0b;
+            --bg-color:   #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e0f2fe;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        /* ── Header ─────────────────────────────────────── */
+        header {
+            background: white;
+            width: 100%;
+            padding: 15px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            text-align: center;
+            box-sizing: border-box;
+            border-bottom: 4px solid transparent;
+        }
+        h1 { margin: 0 0 10px; }
+
+        .header-conn-row {
+            display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+        }
+
+        .status-dot {
+            height: 12px; width: 12px; border-radius: 50%; background: #cbd5e1;
+            transition: background 0.3s;
+        }
+        .connected .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        header.connected { border-bottom-color: var(--success); }
+
+        .btn {
+            border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer;
+            transition: transform 0.1s, filter 0.1s;
+        }
+        .btn:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.1); }
+        .btn:active:not(:disabled) { transform: scale(0.95); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-connect { background: var(--secondary); color: white; }
+        .btn-disconnect { background: var(--danger); color: white; }
+
+        /* ── Tabs ───────────────────────────────────────── */
+        .tabs {
+            display: flex; gap: 5px; margin-top: 20px; flex-wrap: wrap; justify-content: center;
+        }
+        .tab-btn {
+            padding: 10px 20px; border: none; background: #cbd5e1; border-radius: 10px 10px 0 0;
+            font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s;
+        }
+        .tab-btn.active { background: white; color: var(--secondary); box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+
+        /* ── Main Workspace ─────────────────────────────── */
+        main {
+            background: white; width: 95%; max-width: 1000px;
+            border-radius: 0 0 20px 20px; padding: 20px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            min-height: 500px; display: flex; flex-direction: column;
+        }
+
+        .tab-content { display: none; flex-grow: 1; }
+        .tab-content.active { display: flex; flex-direction: column; gap: 20px; }
+
+        /* Grade Toolboxes */
+        .toolbox { display: flex; gap: 10px; padding: 15px; background: var(--bg-color); border-radius: 12px; flex-wrap: wrap; align-items: center; justify-content: center;}
+        
+        /* Grade 2: Pure Visual */
+        .g2-btn { font-size: 3rem; background: white; border: 4px solid #e2e8f0; border-radius: 20px; padding: 15px; cursor: pointer; }
+        .g2-btn:hover { border-color: var(--primary); transform: translateY(-5px); }
+
+        /* Grade 3: Labeled Blocks */
+        .g3-btn { font-size: 1.5rem; background: white; border: 3px solid #cbd5e1; border-radius: 15px; padding: 10px 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;}
+        .g3-btn:hover { border-color: var(--accent); }
+
+        /* Grade 4: Pseudo-code */
+        .g4-btn { font-family: monospace; font-size: 1.1rem; background: #1e293b; color: #a5b4fc; border: none; border-radius: 8px; padding: 12px 15px; cursor: pointer; }
+        .g4-btn:hover { background: #334155; color: white; }
+
+        /* Grade 5: Scratch Style */
+        .g5-btn { 
+            background: var(--primary); color: white; border: none; font-weight: bold; padding: 15px 20px; 
+            border-radius: 4px; position: relative; cursor: pointer; display: inline-block;
+            clip-path: polygon(0 0, 15px 0, 25px 10px, 40px 10px, 50px 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px));
+            margin-bottom: -5px; /* Snap effect */
+        }
+        .g5-btn:hover { filter: brightness(1.1); }
+        .g5-btn.action { background: var(--secondary); }
+        .g5-btn.event { background: var(--warning); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px)); border-radius: 15px 15px 4px 4px; }
+
+        /* ── Mission Strip ──────────────────────────────── */
+        .mission-area { margin-top: 20px; flex-grow: 1;}
+        .mission-strip {
+            display: flex; flex-wrap: wrap; gap: 10px; min-height: 120px;
+            background: #f1f5f9; border: 3px dashed #cbd5e1; border-radius: 15px; padding: 15px;
+            align-content: flex-start;
+        }
+        .mission-strip.g5-strip { flex-direction: column; gap: 0; padding: 20px; align-items: flex-start; }
+        
+        .mission-item {
+            background: var(--primary); color: white; padding: 12px 18px; border-radius: 10px;
+            font-weight: bold; position: relative; animation: popIn 0.2s; font-size: 1.2rem;
+        }
+        .mission-strip.g5-strip .mission-item {
+            clip-path: polygon(0 0, 15px 0, 25px 10px, 40px 10px, 50px 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px));
+            border-radius: 4px; margin-bottom: -4px; padding: 15px 20px 25px 20px; z-index: 1;
+        }
+        
+        .mission-item .remove {
+            position: absolute; top: -5px; right: -5px; background: var(--danger); color: white;
+            border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; cursor: pointer; z-index: 10;
+        }
+        .active-glow { box-shadow: 0 0 15px 5px var(--accent) !important; transform: scale(1.1); z-index: 20; background: var(--accent) !important; }
+
+        /* ── Controls ───────────────────────────────────── */
+        .controls { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-go { background: var(--success); color: white; font-size: 1.5rem; flex-grow: 1; padding: 15px; border-radius: 12px; }
+        .btn-clear { background: #94a3b8; color: white; padding: 15px; border-radius: 12px; font-size: 1.1rem; }
+
+        /* ── Dev Panel ──────────────────────────────────── */
+        .dev-panel { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+        .terminal { background: #0f172a; color: #34d399; font-family: monospace; padding: 15px; border-radius: 10px; flex-grow: 1; overflow-y: auto; height: 200px; }
+        .cmd-line { display: flex; gap: 10px; }
+        .cmd-line input { flex-grow: 1; padding: 12px; font-family: monospace; font-size: 1.1rem; border: 2px solid #cbd5e1; border-radius: 8px; }
+        .dev-actions { display: flex; gap: 10px; background: #fffbeb; padding: 15px; border-left: 5px solid var(--warning); border-radius: 8px;}
+
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<header id="header-bar">
+    <h1>Bittle Mission Control 🚀</h1>
+    <div class="header-conn-row">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Disconnected</span>
+        <button id="connect-btn" class="btn btn-connect" onclick="toggleConnection()">⚡ Connect via BLE</button>
+    </div>
+</header>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('g2')">Grade 2</button>
+    <button class="tab-btn" onclick="switchTab('g3')">Grade 3</button>
+    <button class="tab-btn" onclick="switchTab('g4')">Grade 4</button>
+    <button class="tab-btn" onclick="switchTab('g5')">Grade 5</button>
+    <button class="tab-btn" onclick="switchTab('dev')">⚙️ Dev</button>
+</div>
+
+<main>
+    <div id="g2" class="tab-content active">
+        <div class="toolbox">
+            <button class="g2-btn" onclick="addCmd('Walk', 'kwkF', '🚶')">🚶</button>
+            <button class="g2-btn" onclick="addCmd('Sit', 'ksit', '🪑')">🪑</button>
+            <button class="g2-btn" onclick="addCmd('Wave', 'khi', '👋')">👋</button>
+            <button class="g2-btn" onclick="addCmd('Flip', 'kbk', '🤸')">🤸</button>
+        </div>
+        <div class="mission-area">
+            <h3 style="margin-top:0; color: #64748b;">My Story Sequence</h3>
+            <div id="strip-g2" class="mission-strip"></div>
+        </div>
+    </div>
+
+    <div id="g3" class="tab-content">
+        <div class="toolbox">
+            <button class="g3-btn" onclick="addCmd('Walk Fwd', 'kwkF', '🚶')">🚶 Walk Fwd</button>
+            <button class="g3-btn" onclick="addCmd('Sit Down', 'ksit', '🪑')">🪑 Sit Down</button>
+            <button class="g3-btn" onclick="addCmd('Say Hi', 'khi', '👋')">👋 Say Hi</button>
+            <button class="g3-btn" onclick="addCmd('Pushup', 'kpu', '💪')">💪 Pushup</button>
+        </div>
+        <div class="mission-area">
+            <h3 style="margin-top:0; color: #64748b;">My Program</h3>
+            <div id="strip-g3" class="mission-strip"></div>
+        </div>
+    </div>
+
+    <div id="g4" class="tab-content">
+        <div class="toolbox" style="background: #e2e8f0;">
+            <button class="g4-btn" onclick="addCmd('robot.walk();', 'kwkF', '')">robot.walk();</button>
+            <button class="g4-btn" onclick="addCmd('robot.sit();', 'ksit', '')">robot.sit();</button>
+            <button class="g4-btn" onclick="addCmd('robot.wave();', 'khi', '')">robot.wave();</button>
+            <button class="g4-btn" onclick="addCmd('robot.stretch();', 'kstr', '')">robot.stretch();</button>
+        </div>
+        <div class="mission-area">
+            <h3 style="margin-top:0; color: #64748b;">Script</h3>
+            <div id="strip-g4" class="mission-strip" style="flex-direction: column; background: #334155; border-color: #1e293b;"></div>
+        </div>
+    </div>
+
+    <div id="g5" class="tab-content">
+        <div class="toolbox">
+            <div class="g5-btn event" onclick="addCmd('When 🟢 Clicked', '', '🏁')">🏁 When 🟢 Clicked</div>
+            <div class="g5-btn action" onclick="addCmd('Move Steps (Walk)', 'kwkF', '🟦')">Move Steps (Walk)</div>
+            <div class="g5-btn action" onclick="addCmd('Change Pose (Sit)', 'ksit', '🟦')">Change Pose (Sit)</div>
+            <div class="g5-btn action" onclick="addCmd('Play Animation (Wave)', 'khi', '🟦')">Play Animation (Wave)</div>
+        </div>
+        <div class="mission-area">
+            <h3 style="margin-top:0; color: #64748b;">Canvas</h3>
+            <div id="strip-g5" class="mission-strip g5-strip"></div>
+        </div>
+    </div>
+
+    <div id="dev" class="tab-content">
+        <div class="dev-actions">
+            <div style="flex-grow: 1;">
+                <strong>Robot Configuration:</strong><br>
+                <small>Send permanent EEPROM commands.</small>
+            </div>
+            <button class="btn" style="background:var(--danger);color:white" onclick="sendRaw('b')" title="Toggles the EEPROM boot sound permanently.">🔇 Toggle Permanent Startup Beep</button>
+            <button class="btn" style="background:var(--warning);color:white" onclick="sendRaw('z')" title="Turns off idle movements for this session.">🛑 Disable Random Mind</button>
+        </div>
+        <div id="terminal" class="terminal">Welcome to Bittle Terminal...<br></div>
+        <div class="cmd-line">
+            <input type="text" id="raw-input" placeholder="Type raw command (e.g., ksit) and press Enter...">
+            <button class="btn btn-connect" onclick="submitRaw()">Send</button>
+        </div>
+    </div>
+
+    <div id="universal-controls" class="controls">
+        <button id="btn-go" class="btn btn-go" onclick="runMission()">▶ RUN CODE</button>
+        <button class="btn btn-clear" onclick="clearMission()">🗑️ Clear</button>
+    </div>
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// STATE & TABS
+// ════════════════════════════════════════════════════════════
+let currentTab = 'g2';
+let mission = [];
+let isRunning = false;
+
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+    currentTab = tabId;
+
+    // Hide Play/Clear controls if in Dev tab
+    document.getElementById('universal-controls').style.display = (tabId === 'dev') ? 'none' : 'flex';
+    renderMission();
+}
+
+function addCmd(label, code, icon) {
+    // Grade 5 structural block check (just decorative for this UI)
+    if (code === '') {
+        if (mission.length === 0) mission.push({ label, code, icon });
+        renderMission();
+        return;
+    }
+    mission.push({ id: Date.now(), label, code, icon });
+    renderMission();
+}
+
+function removeCmd(index) {
+    mission.splice(index, 1);
+    renderMission();
+}
+
+function clearMission() {
+    mission = [];
+    renderMission();
+}
+
+function renderMission() {
+    const stripId = `strip-${currentTab}`;
+    const strip = document.getElementById(stripId);
+    if (!strip) return;
+
+    strip.innerHTML = '';
+    mission.forEach((cmd, index) => {
+        const div = document.createElement('div');
+        div.className = 'mission-item';
+        div.id = `cmd-${index}`;
+        
+        // Styling based on grade
+        if (currentTab === 'g2') div.innerHTML = `<span style="font-size: 2rem;">${cmd.icon}</span>`;
+        else if (currentTab === 'g3') div.innerHTML = `${cmd.icon} ${cmd.label}`;
+        else if (currentTab === 'g4') {
+            div.style.background = 'transparent'; div.style.color = '#34d399'; div.style.fontFamily = 'monospace'; div.style.padding = '5px';
+            div.innerText = cmd.label;
+        }
+        else if (currentTab === 'g5') {
+            div.style.background = cmd.code === '' ? 'var(--warning)' : 'var(--secondary)';
+            div.innerText = cmd.label;
+        }
+
+        const rm = document.createElement('div');
+        rm.className = 'remove'; rm.innerHTML = '×';
+        rm.onclick = (e) => { e.stopPropagation(); removeCmd(index); };
+        div.appendChild(rm);
+        strip.appendChild(div);
+    });
+}
+
+function logTerminal(msg, type="info") {
+    const term = document.getElementById('terminal');
+    const color = type === "rx" ? "#60a5fa" : (type === "tx" ? "#f472b6" : "#34d399");
+    const prefix = type === "rx" ? "⬅ " : (type === "tx" ? "➡ " : "• ");
+    term.innerHTML += `<span style="color:${color}">${prefix}${msg}</span><br>`;
+    term.scrollTop = term.scrollHeight;
+}
+
+document.getElementById('raw-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') submitRaw();
+});
+
+function submitRaw() {
+    const input = document.getElementById('raw-input');
+    const val = input.value.trim();
+    if(val) { sendRaw(val); input.value = ''; }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// BLUETOOTH (BLE) CONNECTION
+// ════════════════════════════════════════════════════════════
+const BLE_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+const BLE_CHAR_UUID    = '0000ffe1-0000-1000-8000-00805f9b34fb';
+
+let bleDevice = null;
+let bleServer = null;
+let bleCharacteristic = null;
+let isConnected = false;
+
+async function toggleConnection() {
+    if (isConnected) await disconnectBLE();
+    else await connectBLE();
+}
+
+async function connectBLE() {
+    if (!navigator.bluetooth) {
+        alert("Web Bluetooth is not supported in this browser.");
+        return;
+    }
+
+    try {
+        logTerminal("Requesting Bluetooth Device...");
+        
+        // UPDATED: Accept all devices to bypass strict naming issues
+        bleDevice = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [BLE_SERVICE_UUID]
+        });
+
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+        logTerminal("Connecting to GATT Server...");
+        bleServer = await bleDevice.gatt.connect();
+
+// ... the rest of the function remains exactly the same ...
+
+        logTerminal("Getting Service...");
+        const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
+
+        logTerminal("Getting Characteristic...");
+        bleCharacteristic = await service.getCharacteristic(BLE_CHAR_UUID);
+        
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', handleBLEData);
+
+        isConnected = true;
+        updateUI();
+        logTerminal("✅ Bittle Connected via BLE!", "info");
+
+        // Immediately silence Random Mind
+        logTerminal("Disabling Random Mind (z)...", "info");
+        await sendRaw('z');
+
+    } catch (error) {
+        logTerminal(`Connection failed: ${error}`, "info");
+        console.error(error);
+        alert("Could not connect. Make sure Bittle is turned on and close to the computer.");
+    }
+}
+
+async function disconnectBLE() {
+    if (!bleDevice || !bleDevice.gatt.connected) return;
+    logTerminal("Disconnecting...");
+    bleDevice.gatt.disconnect();
+}
+
+function onDisconnected() {
+    isConnected = false;
+    bleDevice = null; bleServer = null; bleCharacteristic = null;
+    logTerminal("❌ Disconnected.", "info");
+    updateUI();
+}
+
+function updateUI() {
+    const header = document.getElementById('header-bar');
+    const status = document.getElementById('status-text');
+    const btn = document.getElementById('connect-btn');
+
+    if (isConnected) {
+        header.classList.add('connected');
+        status.innerHTML = '<b>Connected! 🔵</b>';
+        btn.textContent = '❌ Disconnect';
+        btn.className = 'btn btn-disconnect';
+    } else {
+        header.classList.remove('connected');
+        status.textContent = 'Disconnected';
+        btn.textContent = '⚡ Connect via BLE';
+        btn.className = 'btn btn-connect';
+    }
+}
+
+function handleBLEData(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder('utf-8');
+    const text = decoder.decode(value);
+    logTerminal(text.trim(), "rx");
+}
+
+async function sendRaw(cmd) {
+    if (!isConnected || !bleCharacteristic) {
+        logTerminal("Cannot send: Not connected.", "info");
+        return;
+    }
+    try {
+        // BLE packets usually max out at 20 bytes. Short commands fit easily.
+        const encoder = new TextEncoder('utf-8');
+        await bleCharacteristic.writeValue(encoder.encode(cmd + '\n'));
+        logTerminal(cmd, "tx");
+    } catch (e) {
+        logTerminal(`Send Error: ${e}`, "info");
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// MISSION EXECUTION
+// ════════════════════════════════════════════════════════════
+async function runMission() {
+    if (!isConnected) {
+        alert('Please connect via BLE first!');
+        return;
+    }
+    if (mission.length === 0 || isRunning) return;
+
+    isRunning = true;
+    const btnGo = document.getElementById('btn-go');
+    btnGo.disabled = true;
+    btnGo.textContent = '⏳ RUNNING...';
+
+    // Execution Loop
+    for (let i = 0; i < mission.length; i++) {
+        const cmd = mission[i];
+        if (cmd.code === '') continue; // Skip structural blocks
+
+        // Highlight active
+        document.querySelectorAll('.mission-item').forEach(el => el.classList.remove('active-glow'));
+        const activeDom = document.getElementById(`cmd-${i}`);
+        if (activeDom) activeDom.classList.add('active-glow');
+
+        // Send Command
+        await sendRaw(cmd.code);
+        
+        // Wait 2.5 seconds for animation to complete
+        await new Promise(r => setTimeout(r, 2500));
+    }
+
+    document.querySelectorAll('.mission-item').forEach(el => el.classList.remove('active-glow'));
+    isRunning = false;
+    btnGo.disabled = false;
+    btnGo.innerHTML = '▶ RUN CODE';
+}
+
+// Init default tab
+switchTab('g2');
+</script>
+</body>
+</html>
