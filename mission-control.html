@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bittle Mission Control 🚀</title>
+    <style>
+        :root {
+            --primary:    #4cc9f0;
+            --secondary:  #4895ef;
+            --accent:     #f72585;
+            --success:    #4caf50;
+            --gold:       #fbbf24;
+            --danger:     #ef4444;
+            --warning:    #f59e0b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e0f2fe;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        /* ── Header ─────────────────────────────────────── */
+        header {
+            background: white;
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            text-align: center;
+            box-sizing: border-box;
+            transition: border-bottom 0.3s;
+        }
+        h1 { margin: 0 0 12px; }
+
+        .header-conn-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Status dot */
+        .status-dot {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            flex-shrink: 0;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        /* Header state classes */
+        .hdr-connected    { border-bottom: 4px solid var(--secondary); }
+        .hdr-connected    .status-dot { background: var(--secondary); box-shadow: 0 0 10px var(--secondary); }
+        .hdr-connecting   .status-dot { background: var(--warning);   animation: blink 0.7s infinite alternate; }
+        .hdr-disconnecting .status-dot { background: #94a3b8;         animation: blink 0.7s infinite alternate; }
+
+        @keyframes blink { to { opacity: 0.2; } }
+
+        /* Non-blocking connection warning (phantom port, wrong port, etc.) */
+        #conn-warning {
+            font-size: 0.78rem;
+            color: #92400e;
+            background: #fef3c7;
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 3px 10px;
+            display: none;
+        }
+        #conn-warning.visible { display: inline-block; }
+
+        /* ── Generic buttons ─────────────────────────────── */
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s, opacity 0.15s;
+        }
+        .btn:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.1); }
+        .btn:active:not(:disabled) { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .btn-connect     { background: var(--success); color: white; }
+        .btn-disconnect  { background: var(--danger);  color: white; }
+        .btn-transition  { background: var(--warning); color: white; cursor: wait; }
+
+        /* ── Connect-helper modal ────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.hidden { display: none; }
+
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 32px;
+            max-width: 440px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+        }
+        .modal-box h2 { margin-top: 0; color: var(--secondary); }
+
+        .port-example {
+            font-family: 'Courier New', monospace;
+            background: #1e293b;
+            color: var(--primary);
+            padding: 8px 18px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 8px 0;
+            font-size: 1.1rem;
+            letter-spacing: 0.04em;
+        }
+
+        .modal-tip {
+            font-size: 0.82rem;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .btn-modal-cancel {
+            background: #94a3b8; color: white; border: none;
+            padding: 11px 20px; border-radius: 50px; font-weight: bold; cursor: pointer;
+        }
+        .btn-modal-proceed {
+            background: var(--success); color: white; border: none;
+            padding: 11px 24px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer;
+        }
+        .btn-modal-cancel:hover  { background: #64748b; }
+        .btn-modal-proceed:hover { filter: brightness(1.1); }
+
+        /* ── Main layout ─────────────────────────────────── */
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1000px;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* ── Panels ──────────────────────────────────────── */
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            width: 300px;
+        }
+        h3 {
+            margin-top: 0;
+            color: var(--secondary);
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        /* Challenge banner */
+        #challenge-banner {
+            background: #fffbeb;
+            border: 2px dashed var(--gold);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: background 0.4s, border-color 0.4s;
+        }
+
+        /* Toolbox grid */
+        .toolbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .block {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 15px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: border-color 0.15s, background 0.15s, transform 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            user-select: none;
+        }
+        .block span { font-size: 1.5rem; }
+        .block:hover  { border-color: var(--primary); background: #f0f9ff; transform: translateY(-2px); }
+        .block:active { transform: scale(0.95); }
+        .block.logic  { border-color: #a855f7; background: #faf5ff; }
+        .block.logic:hover { background: #f3e8ff; }
+        .block.secret { border-color: var(--gold); background: #fffbeb; animation: popIn 0.5s ease-out; }
+
+        /* ── Mission panel ───────────────────────────────── */
+        .mission-panel {
+            flex-grow: 1;
+            min-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #mission-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 100px;
+            background: #f1f5f9;
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            align-content: flex-start;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        #mission-strip.running {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .mission-item {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            position: relative;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        .mission-item .remove {
+            position: absolute;
+            top: -8px; right: -8px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .active-glow {
+            box-shadow: 0 0 15px 5px var(--accent);
+            transform: scale(1.15);
+            z-index: 10;
+            background: var(--accent);
+        }
+
+        /* Controls row */
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-go {
+            background: var(--success); flex-grow: 2; color: white;
+            border: none; padding: 15px; border-radius: 12px;
+            font-size: 1.5rem; font-weight: bold; cursor: pointer;
+            transition: filter 0.2s; min-width: 100px;
+        }
+        .btn-go:hover:not(:disabled) { filter: brightness(1.1); }
+        .btn-go:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+        .btn-stop {
+            background: var(--danger); flex-grow: 1; color: white;
+            border: none; padding: 15px; border-radius: 12px;
+            font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            display: none; transition: filter 0.2s;
+        }
+        .btn-stop.visible { display: block; }
+        .btn-stop:hover { filter: brightness(1.1); }
+
+        .btn-mute {
+            background: var(--warning); color: white;
+            border: none; padding: 15px; border-radius: 12px;
+            font-weight: bold; cursor: pointer; transition: filter 0.2s;
+        }
+        .btn-mute:hover { filter: brightness(1.1); }
+
+        .btn-clear {
+            background: #94a3b8; color: white;
+            border: none; padding: 15px; border-radius: 12px;
+            font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-clear:hover { background: #64748b; }
+
+        /* Save / Load row */
+        .save-load-row { display: flex; gap: 8px; margin-top: 10px; }
+
+        .btn-save, .btn-load {
+            flex: 1;
+            background: #e0f2fe;
+            color: var(--secondary);
+            border: 2px solid var(--primary);
+            padding: 10px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-save:hover, .btn-load:hover { background: #bae6fd; }
+
+        .tip-text { font-size: 0.8rem; color: #64748b; margin-top: 12px; margin-bottom: 0; }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     Connect-Helper Modal
+     Shows cu. port instructions BEFORE the OS port picker
+     ══════════════════════════════════════════════════ -->
+<div id="connect-modal" class="modal-overlay hidden"
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+        <h2 id="modal-title">📡 Connect Your Bittle!</h2>
+        <p>First make sure Bittle is <strong>powered on</strong> and
+           <strong>paired via Bluetooth</strong> in your computer's settings.</p>
+        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 14px 0;">
+
+        <p style="margin-bottom:4px;"><strong>🍎 Using a Mac?</strong>
+           In the port picker, choose the port that starts with:</p>
+        <div class="port-example">cu.Bittle…</div>
+        <div class="modal-tip">
+            ⚠️ Avoid <code>tty.</code> ports — they appear connected but
+            <em>won't transmit data</em> to Bittle.
+        </div>
+
+        <p style="margin-bottom:4px;">
+            <strong>🪟 On Windows?</strong> Choose the <code>COM</code> port
+            (e.g. <code>COM4</code>).
+        </p>
+
+        <div class="modal-actions">
+            <button class="btn-modal-cancel"  onclick="hideConnectModal()">Cancel</button>
+            <button class="btn-modal-proceed" onclick="proceedWithConnection()">Choose Port →</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     Header
+     ══════════════════════════════════════════════════ -->
+<header id="header-bar">
+    <h1>Bittle Mission Control 🚀</h1>
+    <div class="header-conn-row">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Disconnected</span>
+        <span id="conn-warning" class="conn-warning"></span>
+        <button id="connect-btn" class="btn btn-connect" onclick="toggleConnection()">
+            🔌 Connect Robot
+        </button>
+    </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════
+     Main
+     ══════════════════════════════════════════════════ -->
+<main>
+
+    <!-- Toolbox -->
+    <div class="panel">
+        <h3>Command Blocks</h3>
+
+        <div id="challenge-banner">
+            ⭐ <b>Challenge:</b> Make Bittle<br><b>Wave</b>, then do a <b>Flip</b>!
+        </div>
+
+        <div class="toolbox-grid">
+            <div class="block" onclick="addToMission('Walk',    'kwkF', '🚶')"><span>🚶</span>Walk</div>
+            <div class="block" onclick="addToMission('Sit',     'ksit', '🪑')"><span>🪑</span>Sit</div>
+            <div class="block" onclick="addToMission('Wave',    'khi',  '👋')"><span>👋</span>Wave</div>
+            <div class="block" onclick="addToMission('Stretch', 'kstr', '🦒')"><span>🦒</span>Stretch</div>
+            <div class="block" onclick="addToMission('Flip',    'kbk',  '🤸')"><span>🤸</span>Flip</div>
+            <div class="block" onclick="addToMission('Pushup',  'kpu',  '💪')"><span>💪</span>Pushup</div>
+            <div class="block logic" onclick="duplicateSequence()"><span>🔁</span>Repeat 2x</div>
+            <div id="super-move" class="block secret" style="display:none;"
+                 onclick="addToMission('Ninja Roll', 'krl', '🥷')">
+                <span>🥷</span>Ninja Roll
+            </div>
+        </div>
+    </div>
+
+    <!-- Mission Panel -->
+    <div class="mission-panel">
+        <h3>My Mission Sequence</h3>
+        <div id="mission-strip"></div>
+
+        <div class="controls">
+            <button id="btn-go"   class="btn-go"  onclick="runMission()">▶ GO!</button>
+            <button id="btn-stop" class="btn-stop" onclick="stopMission()">⏹ Stop</button>
+            <button id="btn-mute" class="btn-mute" onclick="toggleMute()"
+                    title="Toggle all sounds on/off — including Bittle's startup beeps. This setting is saved permanently on the robot.">🔊 Sound</button>
+            <button class="btn-clear" onclick="clearMission()">Clear</button>
+        </div>
+
+        <!-- Save / Load -->
+        <div class="save-load-row">
+            <button class="btn-save" onclick="saveMission()"
+                    title="Download your mission as a file you can load later">
+                💾 Save Mission
+            </button>
+            <button class="btn-load"
+                    onclick="document.getElementById('load-file-input').click()"
+                    title="Load a previously saved mission file">
+                📂 Load Mission
+            </button>
+            <!-- Hidden file input for loading -->
+            <input type="file" id="load-file-input" accept=".json"
+                   style="display:none;" onchange="loadMission(event)">
+        </div>
+
+        <p class="tip-text">
+            <b>Tip:</b> Make sure Bittle is paired to your computer's Bluetooth first!
+        </p>
+    </div>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════════════
+
+const BAUD_RATE        = 115200;
+const CLOSE_TIMEOUT_MS = 2500;  // Max ms for each teardown step
+const CMD_DELAY_MS     = 2500;  // Pause between mission commands (ms)
+const HEALTH_TIMEOUT_MS = 1500; // Post-connect write-test timeout
+
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+
+/**
+ * connState drives ALL connection UI changes.
+ * Using a state machine instead of a boolean prevents partial
+ * state and debounces frantic clicking during transitions.
+ *
+ *   'disconnected' → 'connecting' → 'connected' → 'disconnecting' → 'disconnected'
+ */
+let connState  = 'disconnected';
+let port       = null;
+let writer     = null;
+let outputDone = null;   // pipeTo() promise — must be drained before port.close()
+
+// Mission state
+let mission         = [];
+let isRunning       = false;
+let isMuted         = false;
+let missionAbortCtrl = null;  // AbortController — lets stopMission() interrupt the loop
+
+
+// ════════════════════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════════════════════
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+// ════════════════════════════════════════════════════════════
+// CONNECTION MANAGEMENT
+// ════════════════════════════════════════════════════════════
+
+/** Primary toggle — debounced during any transition state. */
+async function toggleConnection() {
+    if (connState === 'connecting' || connState === 'disconnecting') return;
+    if (connState === 'connected') {
+        await disconnectSerial();
+    } else {
+        showConnectModal();
+    }
+}
+
+function showConnectModal() {
+    document.getElementById('connect-modal').classList.remove('hidden');
+}
+
+function hideConnectModal() {
+    document.getElementById('connect-modal').classList.add('hidden');
+}
+
+/** Called when the user confirms port selection in the modal. */
+async function proceedWithConnection() {
+    hideConnectModal();
+    await connectSerial();
+}
+
+async function connectSerial() {
+    if (connState !== 'disconnected') return;
+    setConnState('connecting');
+
+    try {
+        // Opens the browser-native port picker
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: BAUD_RATE });
+
+        // Wire up the write stream
+        const encoder = new TextEncoderStream();
+        outputDone = encoder.readable.pipeTo(port.writable);
+        // Silence any unhandled-rejection if the pipe breaks before we clean it up
+        outputDone.catch(() => {});
+        writer = encoder.writable.getWriter();
+
+        setConnState('connected');
+
+        // Non-blocking: write a harmless '\n' to verify the pipe isn't clogged
+        // (catches phantom connections and wrong-port selections early)
+        checkConnectionHealth();
+
+        // Apply per-session settings that Bittle resets on every power cycle
+        applyStartupSettings();
+
+    } catch (err) {
+        console.error('Connect error:', err);
+
+        // User cancelled the picker — NotFoundError, no alert needed
+        if (err.name === 'NotFoundError') {
+            await forceCleanup();
+            return;
+        }
+
+        let message = '😬 Could not connect. Please try again!';
+
+        if (err.message?.toLowerCase().includes('already open') ||
+            err.message?.toLowerCase().includes('failed to open')) {
+            message =
+                '🔒 That port is already in use!\n\n' +
+                '💡 Fix: Close all other browser tabs running this app, ' +
+                'turn Bittle off and back on, then disconnect and ' +
+                'reconnect its Bluetooth pairing.';
+        } else if (err.name === 'SecurityError' ||
+                   err.message?.toLowerCase().includes('permission')) {
+            message =
+                '🚫 Permission denied.\n\n' +
+                'Make sure you\'re using Chrome or Edge — ' +
+                'Safari and Firefox don\'t support Web Serial.';
+        }
+
+        alert(message);
+        await forceCleanup();
+    }
+}
+
+/**
+ * Sends a harmless '\n' immediately after connecting.
+ * If it times out, the port is likely phantom (OS says connected but
+ * the Bluetooth pipe is clogged) or the wrong port was selected on Mac.
+ * Shows a non-blocking banner — does NOT disconnect, as slow BT init
+ * can cause false positives.
+ */
+async function checkConnectionHealth() {
+    if (connState !== 'connected' || !writer) return;
+    try {
+        await Promise.race([
+            writer.write('\n'),
+            sleep(HEALTH_TIMEOUT_MS).then(() => {
+                throw new Error('HEALTH_TIMEOUT');
+            })
+        ]);
+    } catch (err) {
+        if (err.message === 'HEALTH_TIMEOUT') {
+            showConnWarning(
+                '⚠️ Data pipe is slow. If Bittle isn\'t responding, try the cu. port (Mac) or reconnect Bluetooth.'
+            );
+        }
+        // If writer threw for another reason, runMission() will surface it on first real command.
+    }
+}
+
+/**
+ * Sends per-session configuration commands right after connecting.
+ * Automatically called on every successful connection because some
+ * Bittle settings live only in RAM and reset on every power cycle.
+ *
+ * Commands sent:
+ *   'z' — Disables the RANDOM_MIND module, which causes Bittle to perform
+ *          spontaneous idle behaviors (sit, scratch, pee, trot, etc.) after
+ *          ~3 seconds of inactivity. The delay before it first fires feels
+ *          like "several minutes" because each random interval is a weighted
+ *          dice roll (every ~2 s) — low-probability actions appear rarely.
+ *          RAM-only: resets to active on every power cycle → must re-send.
+ *          Silently ignored if firmware was not compiled with #define RANDOM_MIND.
+ *
+ * NOT sent automatically:
+ *   'b' — Startup sound toggle. This IS persistent (writes to EEPROM on the
+ *          robot), so the 🔊 Sound button in the UI handles it on demand.
+ *          Sending 'b' blindly on every connect would flip the setting
+ *          unpredictably if the student connects more than once per session.
+ */
+async function applyStartupSettings() {
+    if (connState !== 'connected' || !writer) return;
+    try {
+        // Give Bittle's own boot sequence ~800 ms to complete before sending.
+        // Commands arriving during firmware init are silently dropped.
+        await sleep(800);
+        if (connState !== 'connected' || !writer) return; // re-check after delay
+
+        await writer.write('z\n');
+        console.log('[Bittle] Startup config: z (random behaviors disabled)');
+    } catch (err) {
+        // Non-critical — log only, do not disconnect
+        console.warn('[Bittle] applyStartupSettings failed:', err.message);
+    }
+}
+
+async function disconnectSerial() {
+    if (connState === 'disconnecting' || connState === 'disconnected') return;
+
+    // Abort any running mission first
+    if (missionAbortCtrl) missionAbortCtrl.abort();
+
+    setConnState('disconnecting');
+    await forceCleanup();
+}
+
+/**
+ * Timeout-guarded teardown.
+ *
+ * Why timeouts on every step?
+ * On macOS + Bluetooth Classic, a clogged write buffer causes
+ * writer.close() and port.close() to hang indefinitely.
+ * Racing against CLOSE_TIMEOUT_MS guarantees this function always
+ * resolves, leaving no zombie async operations behind.
+ */
+async function forceCleanup() {
+    // Step 1 — signal end-of-stream to the encoder
+    if (writer) {
+        try {
+            await Promise.race([writer.close(), sleep(CLOSE_TIMEOUT_MS)]);
+        } catch (e) {
+            // Writer may already be errored/closed — that's fine
+            console.warn('writer.close():', e.message);
+        }
+        writer = null;
+    }
+
+    // Step 2 — drain the pipeTo promise (already silenced above)
+    if (outputDone) {
+        try {
+            await Promise.race([outputDone, sleep(CLOSE_TIMEOUT_MS)]);
+        } catch (e) { /* expected on abnormal teardown */ }
+        outputDone = null;
+    }
+
+    // Step 3 — release the hardware port lock
+    if (port) {
+        try {
+            await Promise.race([port.close(), sleep(CLOSE_TIMEOUT_MS)]);
+        } catch (e) {
+            console.warn('port.close():', e.message);
+        }
+        port = null;
+    }
+
+    setConnState('disconnected');
+}
+
+/**
+ * Best-effort fire-and-forget on tab close / navigation.
+ * Releasing the port lock here prevents "zombie port" errors
+ * on the next page load in the same session.
+ */
+function handlePageUnload() {
+    if (writer) { try { writer.close(); } catch (e) {} }
+    if (port)   { try { port.close();   } catch (e) {} }
+}
+window.addEventListener('beforeunload', handlePageUnload);
+window.addEventListener('pagehide',     handlePageUnload); // also fires on back-forward cache
+
+
+// ════════════════════════════════════════════════════════════
+// CONNECTION UI
+// ════════════════════════════════════════════════════════════
+
+function setConnState(state) {
+    connState = state;
+    updateConnectionUI();
+}
+
+function updateConnectionUI() {
+    const header = document.getElementById('header-bar');
+    const status = document.getElementById('status-text');
+    const btn    = document.getElementById('connect-btn');
+    const warn   = document.getElementById('conn-warning');
+
+    // Clear all state classes in one shot
+    header.classList.remove('hdr-connected', 'hdr-connecting', 'hdr-disconnecting');
+    warn.classList.remove('visible');
+
+    switch (connState) {
+        case 'connected':
+            header.classList.add('hdr-connected');
+            status.innerHTML   = '<b>Bittle Connected! 🔵</b>';
+            btn.textContent    = '❌ Disconnect';
+            btn.className      = 'btn btn-disconnect';
+            btn.disabled       = false;
+            break;
+
+        case 'connecting':
+            header.classList.add('hdr-connecting');
+            status.textContent = 'Connecting…';
+            btn.textContent    = '⏳ Connecting…';
+            btn.className      = 'btn btn-transition';
+            btn.disabled       = true;
+            break;
+
+        case 'disconnecting':
+            header.classList.add('hdr-disconnecting');
+            status.textContent = 'Disconnecting…';
+            btn.textContent    = '⏳ Disconnecting…';
+            btn.className      = 'btn btn-transition';
+            btn.disabled       = true;
+            break;
+
+        default: // 'disconnected'
+            status.textContent = 'Disconnected';
+            btn.textContent    = '🔌 Connect Robot';
+            btn.className      = 'btn btn-connect';
+            btn.disabled       = false;
+    }
+}
+
+/** Shows a non-blocking yellow banner below the connect button. */
+function showConnWarning(msg) {
+    const el = document.getElementById('conn-warning');
+    el.textContent = msg;
+    el.classList.add('visible');
+}
+
+
+// ════════════════════════════════════════════════════════════
+// SENDING COMMANDS
+// ════════════════════════════════════════════════════════════
+
+/** Central send point — throws on any error so callers can react. */
+async function sendCommand(code) {
+    if (!writer || connState !== 'connected') {
+        throw new Error('Not connected');
+    }
+    await writer.write(code + '\n');
+}
+
+
+// ════════════════════════════════════════════════════════════
+// MISSION EXECUTION
+// ════════════════════════════════════════════════════════════
+
+async function runMission() {
+    if (connState !== 'connected') {
+        alert('Please connect your Bittle first using the Connect Robot button!');
+        return;
+    }
+    if (mission.length === 0) return;
+
+    isRunning        = true;
+    missionAbortCtrl = new AbortController();
+    const signal     = missionAbortCtrl.signal;
+
+    const btnGo  = document.getElementById('btn-go');
+    const btnStop = document.getElementById('btn-stop');
+    const strip  = document.getElementById('mission-strip');
+
+    btnGo.disabled = true;
+    btnStop.classList.add('visible');
+    strip.classList.add('running');
+
+    const domBlocks = document.querySelectorAll('.mission-item');
+
+    try {
+        for (let i = 0; i < mission.length; i++) {
+            if (signal.aborted) break;
+
+            // Visual highlight
+            domBlocks.forEach(b => b.classList.remove('active-glow'));
+            if (domBlocks[i]) domBlocks[i].classList.add('active-glow');
+
+            // Transmit
+            try {
+                await sendCommand(mission[i].code);
+            } catch (err) {
+                console.error('Send failed:', err);
+                alert(
+                    '😱 Lost connection to Bittle mid-mission!\n\n' +
+                    'Try reconnecting and running your mission again.'
+                );
+                await disconnectSerial();
+                break;
+            }
+
+            // Interruptible delay — resolves immediately when Stop is pressed
+            await new Promise(resolve => {
+                const timer = setTimeout(resolve, CMD_DELAY_MS);
+                signal.addEventListener('abort', () => {
+                    clearTimeout(timer);
+                    resolve();
+                }, { once: true });
+            });
+        }
+    } finally {
+        domBlocks.forEach(b => b.classList.remove('active-glow'));
+        strip.classList.remove('running');
+        isRunning        = false;
+        missionAbortCtrl = null;
+        btnGo.disabled   = false;
+        btnStop.classList.remove('visible');
+    }
+}
+
+function stopMission() {
+    if (missionAbortCtrl) missionAbortCtrl.abort();
+}
+
+/**
+ * Toggles ALL Bittle sounds on/off via the 'b' command.
+ *
+ * What 'b' controls:
+ *   • The startup melody that plays every time Bittle powers on
+ *   • The low-battery warning beep
+ *   • Any in-mission beeps triggered by the firmware
+ *
+ * Persistence: 'b' writes to EEPROM (non-volatile memory) on the robot.
+ * The setting survives power cycles — mute once and it stays muted until
+ * you press this button again. The UI's isMuted flag tracks the ASSUMED
+ * state for this session; if Bittle was already muted before connecting,
+ * the button label may be out of sync until pressed once to recalibrate.
+ */
+async function toggleMute() {
+    if (connState !== 'connected') {
+        alert('Please connect your Bittle first!');
+        return;
+    }
+    isMuted = !isMuted;
+    const muteBtn = document.getElementById('btn-mute');
+    try {
+        await sendCommand('b');
+        muteBtn.innerHTML        = isMuted ? '🔇 Muted'      : '🔊 Sound';
+        muteBtn.style.background = isMuted ? 'var(--danger)' : 'var(--warning)';
+    } catch (e) {
+        // Roll back the optimistic toggle if the send failed
+        isMuted = !isMuted;
+        console.error('Mute command failed:', e);
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// MISSION BUILDER
+// ════════════════════════════════════════════════════════════
+
+function addToMission(name, code, emoji) {
+    if (isRunning) return;
+    mission.push({ name, code, emoji });
+    renderMission();
+}
+
+function duplicateSequence() {
+    if (isRunning || mission.length === 0) return;
+    const snap = mission.length;           // snapshot before we push
+    for (let i = 0; i < snap; i++) {
+        mission.push({ ...mission[i] });
+    }
+    renderMission();
+}
+
+function removeFromMission(index) {
+    if (isRunning) return;
+    mission.splice(index, 1);
+    renderMission();
+}
+
+function clearMission() {
+    if (isRunning) return;
+    mission = [];
+    renderMission();
+}
+
+function renderMission() {
+    const strip = document.getElementById('mission-strip');
+    strip.innerHTML = '';
+    mission.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'mission-item';
+        div.id        = 'block-' + index;
+        div.innerHTML =
+            `${item.emoji} ${item.name}` +
+            `<div class="remove" onclick="removeFromMission(${index})">✕</div>`;
+        strip.appendChild(div);
+    });
+    evaluateChallenge();
+}
+
+function evaluateChallenge() {
+    let met = false;
+    for (let i = 0; i < mission.length - 1; i++) {
+        if (mission[i].code === 'khi' && mission[i + 1].code === 'kbk') {
+            met = true;
+            break;
+        }
+    }
+
+    const banner    = document.getElementById('challenge-banner');
+    const superMove = document.getElementById('super-move');
+
+    if (met) {
+        banner.innerHTML              = '🎉 <b>Challenge Complete!</b><br>Secret Move Unlocked!';
+        banner.style.background       = '#dcfce7';
+        banner.style.borderColor      = 'var(--success)';
+        superMove.style.display       = 'flex';
+    } else {
+        banner.innerHTML              = '⭐ <b>Challenge:</b> Make Bittle<br><b>Wave</b>, then do a <b>Flip</b>!';
+        banner.style.background       = '#fffbeb';
+        banner.style.borderColor      = 'var(--gold)';
+        superMove.style.display       = 'none';
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ════════════════════════════════════════════════════════════
+
+/**
+ * Serializes the current mission to a JSON file and triggers a download.
+ *
+ * File format (v1):
+ * {
+ *   "version": 1,
+ *   "savedAt": "2026-03-30",
+ *   "commands": [ { "name": "Walk", "code": "kwkF", "emoji": "🚶" }, … ]
+ * }
+ *
+ * Kept simple so a future "Share Mission" or cloud-save feature can
+ * consume the same schema — just POST this object to an API endpoint.
+ */
+function saveMission() {
+    if (mission.length === 0) {
+        alert('Add some commands to your mission first, then save!');
+        return;
+    }
+
+    const data = {
+        version:  1,
+        savedAt:  new Date().toISOString().slice(0, 10),
+        commands: mission.map(({ name, code, emoji }) => ({ name, code, emoji }))
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `bittle-mission-${data.savedAt}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Loads a mission from a previously saved JSON file.
+ * Validates structure before replacing state so a corrupt/wrong file
+ * can never silently wipe the student's in-progress work.
+ */
+function loadMission(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Reset the input so the same file can be loaded again if needed
+    event.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            if (!Array.isArray(data.commands) || data.commands.length === 0) {
+                throw new Error('No commands array found');
+            }
+
+            // Light schema validation — each item needs name, code, emoji
+            const valid = data.commands.every(
+                c => typeof c.name === 'string' &&
+                     typeof c.code === 'string' &&
+                     typeof c.emoji === 'string'
+            );
+            if (!valid) throw new Error('Invalid command format');
+
+            mission = data.commands.map(({ name, code, emoji }) => ({ name, code, emoji }));
+            renderMission();
+
+        } catch (err) {
+            console.error('Load failed:', err);
+            alert(
+                '😕 Could not load that file.\n\n' +
+                'Make sure it\'s a Bittle Mission file (ending in .json) ' +
+                'that you saved from this app.'
+            );
+        }
+    };
+    reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
