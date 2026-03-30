@@ -349,18 +349,37 @@ async function toggleConnection() {
     else await connectBLE();
 }
 
+// ════════════════════════════════════════════════════════════
+// BLUETOOTH (BLE) CONNECTION
+// ════════════════════════════════════════════════════════════
+const BLE_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+const BLE_CHAR_UUID    = '0000ffe1-0000-1000-8000-00805f9b34fb';
+
+let bleDevice = null;
+let bleServer = null;
+let bleCharacteristic = null;
+let isConnected = false;
+
+async function toggleConnection() {
+    if (isConnected) await disconnectBLE();
+    else await connectBLE();
+}
+
 async function connectBLE() {
     if (!navigator.bluetooth) {
-        alert("Web Bluetooth is not supported in this browser.");
+        alert("Web Bluetooth is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
         return;
     }
 
     try {
         logTerminal("Requesting Bluetooth Device...");
         
-        // UPDATED: Accept all devices to bypass strict naming issues
+        // UPDATED: Filter specifically for names starting with "Bittle" or "bittle"
         bleDevice = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
+            filters: [
+                { namePrefix: 'Bittle' },
+                { namePrefix: 'bittle' }
+            ],
             optionalServices: [BLE_SERVICE_UUID]
         });
 
@@ -368,8 +387,6 @@ async function connectBLE() {
 
         logTerminal("Connecting to GATT Server...");
         bleServer = await bleDevice.gatt.connect();
-
-// ... the rest of the function remains exactly the same ...
 
         logTerminal("Getting Service...");
         const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
@@ -391,7 +408,13 @@ async function connectBLE() {
     } catch (error) {
         logTerminal(`Connection failed: ${error}`, "info");
         console.error(error);
-        alert("Could not connect. Make sure Bittle is turned on and close to the computer.");
+        
+        // Friendly error message depending on what happened
+        if (error.name === 'NotFoundError') {
+            logTerminal("Scan cancelled or no Bittle found.", "info");
+        } else {
+            alert("Could not connect. Make sure Bittle is turned on, NOT paired in your Mac's main Bluetooth settings, and close to the computer.");
+        }
     }
 }
 
