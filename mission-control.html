@@ -254,8 +254,15 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     
+    // Show the correct tab content
     document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
+    
+    // Highlight the correct tab button safely
+    const activeBtn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+    
     currentTab = tabId;
 
     // Hide Play/Clear controls if in Dev tab
