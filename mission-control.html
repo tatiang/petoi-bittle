@@ -17,15 +17,19 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #e0f2fe;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            color: #1e293b;
-            overflow-x: hidden;
+            background: #e0f2fe; margin: 0; display: flex; flex-direction: column;
+            align-items: center; min-height: 100vh; color: #1e293b; overflow-x: hidden;
         }
+
+        /* ── Voice Feedback Overlay ─────────────────────── */
+        #voice-feedback {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9); color: white; padding: 15px 30px;
+            border-radius: 50px; font-size: 1.5rem; font-weight: bold; z-index: 9999;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 10px;
+        }
+        #voice-feedback.show { top: 20px; }
 
         /* ── Header ─────────────────────────────────────── */
         header {
@@ -38,15 +42,12 @@
 
         .robot-selector select {
             padding: 8px 15px; font-size: 1.1rem; font-weight: bold; border-radius: 8px;
-            border: 2px solid var(--secondary); background: var(--bg-color); cursor: pointer; outline: none;
-            margin-bottom: 15px;
+            border: 2px solid var(--secondary); background: var(--bg-color); cursor: pointer; outline: none; margin-bottom: 15px;
         }
 
         .header-conn-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
-        .status-dot {
-            height: 12px; width: 12px; border-radius: 50%; background: #cbd5e1; transition: background 0.3s;
-        }
+        .status-dot { height: 12px; width: 12px; border-radius: 50%; background: #cbd5e1; transition: background 0.3s; }
         .connected .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
         header.connected { border-bottom-color: var(--success); }
 
@@ -73,17 +74,22 @@
 
         /* ── Main Workspace ─────────────────────────────── */
         main {
-            background: white; width: 95%; max-width: 1000px;
-            border-radius: 0 0 20px 20px; padding: 20px;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            min-height: 500px; display: flex; flex-direction: column;
+            background: white; width: 95%; max-width: 1000px; border-radius: 0 0 20px 20px; padding: 20px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); min-height: 500px; display: flex; flex-direction: column;
         }
 
-        .tab-content { display: none; flex-grow: 1; flex-direction: column; gap: 20px; }
+        .tab-content { display: none; flex-grow: 1; flex-direction: column; gap: 15px; }
         .tab-content.active { display: flex; }
 
+        .workspace-header {
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #f1f5f9; padding: 10px 20px; border-radius: 12px;
+        }
+        .workspace-header h3 { margin: 0; color: #475569; }
+        .adv-toggle-container { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #ef4444; }
+
         /* Toolboxes */
-        .toolbox { display: flex; gap: 10px; padding: 15px; background: var(--bg-color); border-radius: 12px; flex-wrap: wrap; align-items: center; justify-content: center;}
+        .toolbox { display: flex; gap: 10px; padding: 15px; background: var(--bg-color); border-radius: 12px; flex-wrap: wrap; align-items: center; justify-content: flex-start;}
         .g4-toolbox { background: #e2e8f0; }
 
         /* Grade Buttons */
@@ -95,52 +101,48 @@
         .g4-btn:hover { background: #334155; color: white; }
         .g5-btn { 
             background: var(--primary); color: white; border: none; font-weight: bold; padding: 15px 20px; 
-            border-radius: 4px; position: relative; cursor: pointer; display: inline-block;
+            border-radius: 4px; position: relative; cursor: pointer; display: inline-block; margin-bottom: -5px; transition: 0.2s;
             clip-path: polygon(0 0, 15px 0, 25px 10px, 40px 10px, 50px 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px));
-            margin-bottom: -5px; transition: 0.2s;
         }
         .g5-btn:hover { filter: brightness(1.1); }
         .g5-btn.action { background: var(--secondary); }
-        .g5-btn.event { background: var(--warning); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px)); border-radius: 15px 15px 4px 4px; }
+        .g5-btn.event { background: var(--warning); border-radius: 15px 15px 4px 4px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px)); }
+        
+        .adv-btn { border-color: var(--danger) !important; border-style: dashed !important; }
 
         /* Mission Strip */
-        .mission-area { margin-top: 20px; flex-grow: 1;}
+        .mission-area { flex-grow: 1;}
         .mission-strip {
-            display: flex; flex-wrap: wrap; gap: 10px; min-height: 120px;
-            background: #f1f5f9; border: 3px dashed #cbd5e1; border-radius: 15px; padding: 15px;
-            align-content: flex-start;
+            display: flex; flex-wrap: wrap; gap: 10px; min-height: 120px; background: #f1f5f9; border: 3px dashed #cbd5e1; border-radius: 15px; padding: 15px; align-content: flex-start;
         }
         .g4-strip { flex-direction: column; background: #334155; border-color: #1e293b; }
         .g5-strip { flex-direction: column; gap: 0; padding: 20px; align-items: flex-start; }
         
-        .mission-item {
-            background: var(--primary); color: white; padding: 12px 18px; border-radius: 10px;
-            font-weight: bold; position: relative; animation: popIn 0.2s; font-size: 1.2rem;
-        }
-        .g5-strip .mission-item {
-            clip-path: polygon(0 0, 15px 0, 25px 10px, 40px 10px, 50px 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px));
-            border-radius: 4px; margin-bottom: -4px; padding: 15px 20px 25px 20px; z-index: 1;
-        }
+        .mission-item { background: var(--primary); color: white; padding: 12px 18px; border-radius: 10px; font-weight: bold; position: relative; animation: popIn 0.2s; font-size: 1.2rem; }
+        .g5-strip .mission-item { border-radius: 4px; margin-bottom: -4px; padding: 15px 20px 25px 20px; z-index: 1; clip-path: polygon(0 0, 15px 0, 25px 10px, 40px 10px, 50px 0, 100% 0, 100% calc(100% - 10px), 50px calc(100% - 10px), 40px 100%, 25px 100%, 15px calc(100% - 10px), 0 calc(100% - 10px)); }
         .mission-item .remove {
-            position: absolute; top: -5px; right: -5px; background: var(--danger); color: white;
-            border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
-            font-size: 12px; cursor: pointer; z-index: 10;
+            position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; z-index: 10;
         }
         .active-glow { box-shadow: 0 0 15px 5px var(--accent) !important; transform: scale(1.1); z-index: 20; background: var(--accent) !important; }
 
         /* Controls */
-        .controls { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;}
+        .controls { display: flex; gap: 10px; flex-wrap: wrap;}
         .btn-go { background: var(--success); color: white; font-size: 1.5rem; flex-grow: 1; padding: 15px; border-radius: 12px; }
         .btn-clear { background: #94a3b8; color: white; padding: 15px; border-radius: 12px; font-size: 1.1rem; }
 
-        /* Terminal & Settings & Dictionary */
-        .terminal { background: #0f172a; color: #34d399; font-family: monospace; padding: 15px; border-radius: 10px; flex-grow: 1; overflow-y: auto; height: 300px; }
+        /* Terminal & Settings & Dictionary & Dev Grid */
+        .terminal { background: #0f172a; color: #34d399; font-family: monospace; padding: 15px; border-radius: 10px; flex-grow: 1; overflow-y: auto; height: 200px; }
         .cmd-line { display: flex; gap: 10px; margin-top:10px; }
         .cmd-line input { flex-grow: 1; padding: 12px; font-family: monospace; font-size: 1.1rem; border: 2px solid #cbd5e1; border-radius: 8px; }
 
+        .dev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;}
+        .dev-btn { background: #334155; color: white; border: none; padding: 15px 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .dev-btn:hover { background: var(--accent); transform: scale(1.05); }
+
         .settings-panel { display: flex; flex-direction: column; gap: 20px; padding: 20px; background: var(--bg-color); border-radius: 12px;}
-        .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;}
-        
+        .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; font-weight: bold; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;}
+        .setting-row small { display: block; font-size: 0.8rem; color: #64748b; font-weight: normal; margin-top: 4px; }
+
         .dict-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .dict-table th, .dict-table td { padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; }
         .dict-table th { background: var(--primary); color: white; }
@@ -148,7 +150,7 @@
         .cmd-badge { background: #1e293b; color: #a5b4fc; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.9rem;}
 
         /* Toggles */
-        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; flex-shrink: 0;}
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
@@ -161,11 +163,13 @@
 </head>
 <body>
 
+<div id="voice-feedback">🎙️ Listening...</div>
+
 <header id="header-bar">
     <h1>Mission Control 🚀</h1>
     <div class="robot-selector">
         <select id="robot-select" onchange="switchRobot(this.value)">
-            <option value="bittle">🤖 Petoi Bittle</option>
+            <option value="bittle">🤖 Petoi Bittle X V2</option>
             <option value="mbot">🚗 Makeblock mBot</option>
         </select>
     </div>
@@ -188,12 +192,20 @@
 
 <main>
     <div id="workspace-container" class="tab-content active">
+        <div class="workspace-header">
+            <h3 id="mission-title">My Program</h3>
+            <div class="adv-toggle-container">
+                <span>Advanced Tools 🌶️</span>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-adv-tools" onchange="appConfig.advancedMode = this.checked; buildUI();">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
         <div id="dynamic-toolbox" class="toolbox"></div>
         <div class="mission-area">
-            <h3 id="mission-title" style="margin-top:0; color: #64748b;">My Program</h3>
             <div id="mission-strip" class="mission-strip"></div>
         </div>
-        
         <div id="universal-controls" class="controls">
             <button id="btn-voice" class="btn btn-voice" onclick="toggleVoiceControl()">🎙️ Voice Command</button>
             <button id="btn-go" class="btn btn-go" onclick="runMission()">▶ RUN CODE</button>
@@ -203,48 +215,74 @@
 
     <div id="dict" class="tab-content">
         <h2>Robot Vocabulary Dictionary</h2>
-        <p>Use these English or Mandarin phrases with the <b>Voice Command</b> button!</p>
         <table class="dict-table" id="dictionary-table">
-            <tr>
-                <th>Action</th>
-                <th>English</th>
-                <th>Mandarin (Pinyin)</th>
-                <th>Code</th>
-            </tr>
-            </table>
+            <tr><th>Action</th><th>English</th><th>Mandarin (Pinyin)</th><th>Code</th></tr>
+        </table>
     </div>
 
     <div id="settings" class="tab-content">
         <h2>Mission Control Settings</h2>
         <div class="settings-panel">
             <div class="setting-row">
-                <span>🎵 UI Application Sounds</span>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-ui-sound" checked onchange="appConfig.uiSounds = this.checked">
-                    <span class="slider"></span>
-                </label>
+                <div>
+                    <span>🎵 UI Application Sounds</span>
+                    <small>Plays sounds on your computer when clicking buttons.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="set-ui-sound" checked onchange="tempConfig.uiSounds = this.checked"><span class="slider"></span></label>
             </div>
             <div class="setting-row">
-                <span>🤖 Play Robot Startup Melody on Connect</span>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-robot-sound" checked onchange="appConfig.robotStartup = this.checked">
-                    <span class="slider"></span>
-                </label>
+                <div>
+                    <span>🤖 Play Robot Startup Melody on Connect</span>
+                    <small>Robot plays a short jingle when successfully paired.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="set-robot-sound" checked onchange="tempConfig.robotStartup = this.checked"><span class="slider"></span></label>
             </div>
             <div class="setting-row">
-                <span>🎙️ Voice Recognition Language</span>
-                <select id="voice-lang-select" onchange="appConfig.voiceLang = this.value" style="padding:5px; font-size:1rem; border-radius:5px;">
+                <div>
+                    <span>💤 Random Idle Movements (Fidgeting)</span>
+                    <small>Robot will naturally stretch and look around if left alone.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="set-idle" checked onchange="tempConfig.idleBehavior = this.checked"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <span>🗣️ Enable Robot's Built-In Mic (Bittle X Only)</span>
+                    <small>If OFF, Bittle will only listen to the Web App's Voice Command button.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="set-hw-voice" checked onchange="tempConfig.hwVoice = this.checked; toggleHardwareVoice(this.checked);"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+                <span>🎙️ Web App Voice Language</span>
+                <select id="set-voice-lang" onchange="tempConfig.voiceLang = this.value" style="padding:5px; font-size:1rem; border-radius:5px;">
                     <option value="en-US">English (US)</option>
                     <option value="zh-CN">中文 (Mandarin)</option>
                 </select>
             </div>
+            <button class="btn btn-success" style="background: var(--success); color:white; font-size: 1.2rem; padding: 15px;" onclick="saveSettings()">💾 Save Configurations</button>
         </div>
     </div>
 
     <div id="dev" class="tab-content">
+        <h3 style="margin: 0; color: var(--secondary);">OpenCat Direct Commands</h3>
+        <div class="dev-grid">
+            <button class="dev-btn" onclick="sendRaw('d')">🛑 Rest (d)</button>
+            <button class="dev-btn" onclick="sendRaw('c')">📐 Calibration Pose (c)</button>
+            <button class="dev-btn" onclick="sendRaw('g')">⚖️ Toggle Gyro (g)</button>
+            <button class="dev-btn" onclick="sendRaw('kbf')">🤸 Backflip (kbf)</button>
+            <button class="dev-btn" onclick="sendRaw('krl')">🌀 Ninja Roll (krl)</button>
+            <button class="dev-btn" onclick="sendRaw('kpee')">🐕 Pee (kpee)</button>
+            <button class="dev-btn" onclick="sendRaw('kscrh')">🐾 Scratch (kscrh)</button>
+            <button class="dev-btn" onclick="sendRaw('ksnF')">👃 Sniff (ksnF)</button>
+            <button class="dev-btn" onclick="sendRaw('kly')">💤 Lay Down (kly)</button>
+            <button class="dev-btn" onclick="sendRaw('kpd')">😵 Play Dead (kpd)</button>
+            <button class="dev-btn" onclick="sendRaw('v')">🔋 Battery Check (v)</button>
+            <button class="dev-btn" onclick="sendRaw('b14 8 14 8 21 8')">🎵 Super Mario Melody</button>
+        </div>
+
+        <h3 style="margin: 0; color: var(--secondary);">Serial Terminal</h3>
         <div id="terminal" class="terminal">Welcome to Dev Terminal...<br></div>
         <div class="cmd-line">
-            <input type="text" id="raw-input" placeholder="Type raw command and press Enter...">
+            <input type="text" id="raw-input" placeholder="Type raw OpenCat command and press Enter...">
             <button class="btn btn-connect" onclick="submitRaw()">Send</button>
         </div>
     </div>
@@ -252,232 +290,161 @@
 
 <script>
 // ════════════════════════════════════════════════════════════
-// APPLICATION CONFIGURATION & SOUND ENGINE
+// APPLICATION CONFIGURATION & STATE
 // ════════════════════════════════════════════════════════════
-const appConfig = {
-    uiSounds: true,
-    robotStartup: true,
-    voiceLang: 'en-US'
-};
+const appConfig = { uiSounds: true, robotStartup: true, voiceLang: 'en-US', advancedMode: false, idleBehavior: true, hwVoice: true };
+let tempConfig = { ...appConfig }; 
+let lastCommandTime = Date.now();
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playUISound(type) {
     if (!appConfig.uiSounds || audioCtx.state === 'suspended') return;
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
+    const osc = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+    osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+    
     if (type === 'click') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    } else if (type === 'connect') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-        osc.frequency.setValueAtTime(554, audioCtx.currentTime + 0.1);
-        osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
     } else if (type === 'success') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.3);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
     }
 }
+document.body.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
 
-// Ensure Audio Context wakes up on first interaction (Browser policy)
-document.body.addEventListener('click', () => {
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-}, { once: true });
+function saveSettings() {
+    Object.assign(appConfig, tempConfig);
+    playUISound('success');
+    const btn = document.querySelector('.btn-success');
+    btn.innerHTML = '✅ Saved Successfully!';
+    setTimeout(() => btn.innerHTML = '💾 Save Configurations', 2000);
+}
 
+// Send OpenCat Voice Command Toggle
+function toggleHardwareVoice(isEnabled) {
+    if (!isConnected || activeRobotId !== 'bittle') return;
+    // XAc = Enable Voice, XAd = Disable Voice
+    sendRaw(isEnabled ? 'XAc' : 'XAd');
+    logTerminal(`Hardware Voice Module: ${isEnabled ? 'ON' : 'OFF'}`, 'info');
+}
 
 // ════════════════════════════════════════════════════════════
-// ROBOT DICTIONARY & COMMAND LIBRARIES
+// ROBOT DICTIONARY & LIBRARIES (EXPANDED)
 // ════════════════════════════════════════════════════════════
 const VOCABULARY = [
     { action: 'Rest / Stop', en: 'Stop', zh: '停 (Tíng) / 休息 (Xiū xí)', code: 'd' },
     { action: 'Walk Forward', en: 'Forward / Walk', zh: '走 (Zǒu) / 前进 (Qián jìn)', code: 'kwkF' },
     { action: 'Walk Backward', en: 'Backward / Back', zh: '后退 (Hòu tuì)', code: 'kbk' },
     { action: 'Sit', en: 'Sit down', zh: '坐下 (Zuò xià)', code: 'ksit' },
-    { action: 'Stand / Balance', en: 'Stand up', zh: '站起来 (Zhàn qǐlái)', code: 'kbalance' },
+    { action: 'Stand', en: 'Stand up', zh: '站起来 (Zhàn qǐlái)', code: 'kbalance' },
     { action: 'Say Hello', en: 'Hello / Hi', zh: '你好 (Nǐ hǎo)', code: 'khi' },
     { action: 'Push Up', en: 'Push up', zh: '俯卧撑 (Fǔ wò chēng)', code: 'kpu' },
-    { action: 'Dance (Macro)', en: 'Dance / Party', zh: '跳舞 (Tiào wǔ)', code: 'khi' } // simplified macro
+    { action: 'Dance', en: 'Dance / Party', zh: '跳舞 (Tiào wǔ)', code: 'khi' },
+    { action: 'Backflip', en: 'Backflip / Flip', zh: '后空翻 (Hòu kōng fān)', code: 'kbf' },
+    { action: 'Roll', en: 'Roll', zh: '打滚 (Dǎ gǔn)', code: 'krl' },
+    { action: 'Play Dead', en: 'Play dead', zh: '装死 (Zhuāng sǐ)', code: 'kpd' },
+    { action: 'Scratch', en: 'Scratch', zh: '挠痒 (Náo yǎng)', code: 'kscrh' },
+    { action: 'Pee', en: 'Pee', zh: '尿尿 (Niào niào)', code: 'kpee' }
 ];
 
 const ROBOT_PROFILES = {
     bittle: {
-        name: "Petoi Bittle",
-        serviceUUID: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-        txUUID:      '6e400002-b5a3-f393-e0a9-e50e24dcca9e', 
-        rxUUID:      '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+        name: "Petoi Bittle X V2", serviceUUID: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+        txUUID: '6e400002-b5a3-f393-e0a9-e50e24dcca9e', rxUUID: '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
         formatPayload: (cmd) => new TextEncoder('utf-8').encode(cmd + '\n'),
         filters: [{ namePrefix: 'Bittle' }, { namePrefix: 'bittle' }, { namePrefix: 'Bittle77' }],
-        startupCmd: 'b14 8 14 8 21 8' // Plays a happy double-beep melody
+        startupCmd: 'b14 8 14 8 21 8',
+        idleCmds: ['khi', 'kstr', 'kck', 'ksit']
     },
     mbot: {
-        name: "Makeblock mBot",
-        serviceUUID: '0000ffe1-0000-1000-8000-00805f9b34fb', 
-        txUUID:      '0000ffe2-0000-1000-8000-00805f9b34fb',
-        rxUUID:      '0000ffe2-0000-1000-8000-00805f9b34fb',
+        name: "Makeblock mBot", serviceUUID: '0000ffe1-0000-1000-8000-00805f9b34fb', 
+        txUUID: '0000ffe2-0000-1000-8000-00805f9b34fb', rxUUID: '0000ffe2-0000-1000-8000-00805f9b34fb',
         formatPayload: (cmdArray) => new Uint8Array(cmdArray),
         filters: [{ namePrefix: 'Makeblock' }, { namePrefix: 'mBot' }],
-        startupCmd: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00] // Honks horn
+        startupCmd: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00],
+        idleCmds: [ [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00] ]
     }
 };
 
 const COMMAND_LIBRARIES = {
     bittle: {
         g2: [
-            { label: 'Walk', code: 'kwkF', icon: '🚶', class: 'g2-btn' },
-            { label: 'Sit',  code: 'ksit', icon: '🪑', class: 'g2-btn' },
-            { label: 'Wave', code: 'khi',  icon: '👋', class: 'g2-btn' },
-            { label: 'Pushup', code: 'kpu',  icon: '💪', class: 'g2-btn' }
+            { label: 'Walk', code: 'kwkF', icon: '🚶', class: 'g2-btn', adv: false },
+            { label: 'Sit',  code: 'ksit', icon: '🪑', class: 'g2-btn', adv: false },
+            { label: 'Wave', code: 'khi',  icon: '👋', class: 'g2-btn', adv: false },
+            { label: 'Stop', code: 'd',    icon: '🛑', class: 'g2-btn', adv: false },
+            // Advanced G2
+            { label: 'Flip',    code: 'kbf',  icon: '🤸', class: 'g2-btn adv-btn', adv: true },
+            { label: 'Roll',    code: 'krl',  icon: '🌀', class: 'g2-btn adv-btn', adv: true },
+            { label: 'Stretch', code: 'kstr', icon: '🧘', class: 'g2-btn adv-btn', adv: true }
         ],
         g3: [
-            { label: 'Walk Fwd', code: 'kwkF', icon: '🚶', class: 'g3-btn' },
-            { label: 'Sit Down', code: 'ksit', icon: '🪑', class: 'g3-btn' },
-            { label: 'Say Hi',   code: 'khi',  icon: '👋', class: 'g3-btn' },
-            { label: 'Stop',     code: 'd',    icon: '🛑', class: 'g3-btn' }
+            { label: 'Walk Fwd', code: 'kwkF', icon: '🚶', class: 'g3-btn', adv: false },
+            { label: 'Sit Down', code: 'ksit', icon: '🪑', class: 'g3-btn', adv: false },
+            { label: 'Say Hi',   code: 'khi',  icon: '👋', class: 'g3-btn', adv: false },
+            { label: 'Stop',     code: 'd',    icon: '🛑', class: 'g3-btn', adv: false },
+            // Advanced G3
+            { label: 'Run Fast',  code: 'ktrF', icon: '🏃', class: 'g3-btn adv-btn', adv: true },
+            { label: 'Backflip',  code: 'kbf',  icon: '🤸', class: 'g3-btn adv-btn', adv: true },
+            { label: 'Push Ups',  code: 'kpu',  icon: '💪', class: 'g3-btn adv-btn', adv: true },
+            { label: 'Look Rnd',  code: 'kck',  icon: '👀', class: 'g3-btn adv-btn', adv: true }
         ],
         g4: [
-            { label: 'robot.walk();',    code: 'kwkF', icon: '', class: 'g4-btn' },
-            { label: 'robot.sit();',     code: 'ksit', icon: '', class: 'g4-btn' },
-            { label: 'robot.wave();',    code: 'khi',  icon: '', class: 'g4-btn' },
-            { label: 'robot.stop();',    code: 'd',    icon: '', class: 'g4-btn' }
+            { label: 'robot.walk();', code: 'kwkF', icon: '', class: 'g4-btn', adv: false },
+            { label: 'robot.sit();',  code: 'ksit', icon: '', class: 'g4-btn', adv: false },
+            { label: 'robot.wave();', code: 'khi',  icon: '', class: 'g4-btn', adv: false },
+            { label: 'robot.stop();', code: 'd',    icon: '', class: 'g4-btn', adv: false },
+            // Advanced G4
+            { label: 'robot.backflip();', code: 'kbf',  icon: '', class: 'g4-btn adv-btn', adv: true },
+            { label: 'robot.crawl();',    code: 'kcrF', icon: '', class: 'g4-btn adv-btn', adv: true },
+            { label: 'robot.stretch();',  code: 'kstr', icon: '', class: 'g4-btn adv-btn', adv: true }
         ],
         g5: [
-            { label: 'When 🟢 Clicked',   code: '',    icon: '🏁', class: 'g5-btn event' },
-            { label: 'Move Steps (Walk)', code: 'kwkF', icon: '🟦', class: 'g5-btn action' },
-            { label: 'Change Pose (Sit)', code: 'ksit', icon: '🟦', class: 'g5-btn action' },
-            { label: 'Halt Execution',    code: 'd',    icon: '🟥', class: 'g5-btn action' }
+            { label: 'When 🟢 Clicked',   code: '',    icon: '🏁', class: 'g5-btn event', adv: false },
+            { label: 'Move Steps (Walk)', code: 'kwkF', icon: '🟦', class: 'g5-btn action', adv: false },
+            { label: 'Change Pose (Sit)', code: 'ksit', icon: '🟦', class: 'g5-btn action', adv: false },
+            { label: 'Halt Execution',    code: 'd',    icon: '🟥', class: 'g5-btn action', adv: false },
+            // Advanced G5
+            { label: 'Execute Action: Backflip', code: 'kbf',  icon: '🟪', class: 'g5-btn action adv-btn', adv: true },
+            { label: 'Execute Action: Pushup',   code: 'kpu',  icon: '🟪', class: 'g5-btn action adv-btn', adv: true }
         ]
     },
-    // mbot remains identical as previously established
     mbot: {
         g2: [
-            { label: 'Drive', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '⬆️', class: 'g2-btn' },
-            { label: 'Reverse', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0xb0, 0xff], icon: '⬇️', class: 'g2-btn' },
-            { label: 'Honk', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '📢', class: 'g2-btn' }
+            { label: 'Drive', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '⬆️', class: 'g2-btn', adv: false },
+            { label: 'Reverse', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0xb0, 0xff], icon: '⬇️', class: 'g2-btn', adv: false },
+            { label: 'Honk', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '📢', class: 'g2-btn', adv: false },
+            { label: 'Spin L', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x50], icon: '🔄', class: 'g2-btn adv-btn', adv: true },
+            { label: 'Spin R', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0xb0, 0xb0], icon: '🔃', class: 'g2-btn adv-btn', adv: true }
         ],
         g3: [
-            { label: 'Drive Fwd', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '⬆️', class: 'g3-btn' },
-            { label: 'Back Up', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0xb0, 0xff], icon: '⬇️', class: 'g3-btn' },
-            { label: 'Honk', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '📢', class: 'g3-btn' }
+            { label: 'Drive Fwd', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '⬆️', class: 'g3-btn', adv: false },
+            { label: 'Back Up',   code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0xb0, 0xff], icon: '⬇️', class: 'g3-btn', adv: false },
+            { label: 'Honk Horn', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '📢', class: 'g3-btn', adv: false },
+            { label: 'Rotate Left', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x50], icon: '🔄', class: 'g3-btn adv-btn', adv: true },
+            { label: 'Rotate Right',code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0xb0, 0xb0], icon: '🔃', class: 'g3-btn adv-btn', adv: true }
         ],
         g4: [
-            { label: 'mbot.drive(100);', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '', class: 'g4-btn' },
-            { label: 'mbot.honk();', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '', class: 'g4-btn' }
+            { label: 'mbot.drive(100);', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '', class: 'g4-btn', adv: false },
+            { label: 'mbot.honk();',     code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '', class: 'g4-btn', adv: false },
+            { label: 'mbot.spin(-100, 100);', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x50], icon: '', class: 'g4-btn adv-btn', adv: true }
         ],
         g5: [
-            { label: 'When 🟢 Clicked', code: '', icon: '🏁', class: 'g5-btn event' },
-            { label: 'Set Motor Speed 100', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '🟦', class: 'g5-btn action' },
-            { label: 'Play Sound', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '🟦', class: 'g5-btn action' }
+            { label: 'When 🟢 Clicked', code: '', icon: '🏁', class: 'g5-btn event', adv: false },
+            { label: 'Set Motor Speed 100', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x00], icon: '🟦', class: 'g5-btn action', adv: false },
+            { label: 'Play Sound', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x22, 0x00, 0x00], icon: '🟦', class: 'g5-btn action', adv: false },
+            { label: 'Set Differential Drive', code: [0xff, 0x55, 0x05, 0x00, 0x02, 0x05, 0x50, 0x50], icon: '🟪', class: 'g5-btn action adv-btn', adv: true }
         ]
     }
 };
 
 // ════════════════════════════════════════════════════════════
-// VOICE CONTROL (WEB SPEECH API)
+// UI & STATE
 // ════════════════════════════════════════════════════════════
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-let isListening = false;
-
-if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.toLowerCase();
-        logTerminal(`🎤 Heard: "${transcript}"`, "info");
-        processVoiceCommand(transcript);
-        stopVoiceControl();
-    };
-
-    recognition.onerror = (event) => {
-        logTerminal(`🎤 Voice Error: ${event.error}`, "info");
-        stopVoiceControl();
-    };
-    
-    recognition.onend = () => { stopVoiceControl(); };
-}
-
-function toggleVoiceControl() {
-    if (!SpeechRecognition) {
-        alert("Voice recognition is not supported in this browser. Try Google Chrome.");
-        return;
-    }
-    
-    if (isListening) {
-        recognition.stop();
-        stopVoiceControl();
-    } else {
-        if (!isConnected) { alert("Please connect via BLE first!"); return; }
-        
-        playUISound('success');
-        recognition.lang = appConfig.voiceLang;
-        recognition.start();
-        isListening = true;
-        
-        const btn = document.getElementById('btn-voice');
-        btn.classList.add('listening');
-        btn.innerHTML = '🔴 Listening...';
-        logTerminal("🎤 Listening for commands...", "info");
-    }
-}
-
-function stopVoiceControl() {
-    isListening = false;
-    const btn = document.getElementById('btn-voice');
-    btn.classList.remove('listening');
-    btn.innerHTML = '🎙️ Voice Command';
-}
-
-function processVoiceCommand(text) {
-    let matchedCode = null;
-    let textStr = text.toLowerCase();
-
-    // Check against dictionary
-    for (const word of VOCABULARY) {
-        const enWords = word.en.toLowerCase().split(' / ');
-        const zhWords = word.zh.toLowerCase().split(' / ').map(w => w.split(' (')[0].trim()); // Extract characters before Pinyin
-        
-        if (enWords.some(w => textStr.includes(w)) || zhWords.some(w => textStr.includes(w))) {
-            matchedCode = word.code;
-            logTerminal(`✅ Matched Intent: ${word.action}`, "success");
-            break;
-        }
-    }
-
-    if (matchedCode) {
-        playUISound('success');
-        sendRaw(matchedCode);
-    } else {
-        logTerminal("❓ Voice command not recognized.", "info");
-    }
-}
-
-// ════════════════════════════════════════════════════════════
-// STATE & UI GENERATION
-// ════════════════════════════════════════════════════════════
-let activeRobotId = 'bittle';
-let currentTab = 'g2';
-let mission = [];
-let isRunning = false;
+let activeRobotId = 'bittle'; let currentTab = 'g2'; let mission = []; let isRunning = false;
 
 function buildDictionary() {
     const table = document.getElementById('dictionary-table');
@@ -485,38 +452,24 @@ function buildDictionary() {
         const row = table.insertRow();
         row.innerHTML = `<td><b>${v.action}</b></td><td>${v.en}</td><td>${v.zh}</td><td><span class="cmd-badge">${v.code}</span></td>`;
     });
-}
-buildDictionary();
+} buildDictionary();
 
 function switchRobot(robotId) {
     if (isConnected && activeRobotId !== robotId) disconnectBLE();
-    activeRobotId = robotId;
-    clearMission();
-    logTerminal(`Switched active profile to: ${ROBOT_PROFILES[robotId].name}`, 'info');
-    buildUI();
+    activeRobotId = robotId; clearMission(); buildUI();
 }
 
 function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
-
-    // Hide all contents
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.remove('active');
-        el.style.display = 'none';
-    });
+    document.querySelectorAll('.tab-content').forEach(el => { el.classList.remove('active'); el.style.display = 'none'; });
 
     currentTab = tabId;
-
     if (['g2', 'g3', 'g4', 'g5'].includes(tabId)) {
-        const ws = document.getElementById('workspace-container');
-        ws.classList.add('active');
-        ws.style.display = 'flex';
+        const ws = document.getElementById('workspace-container'); ws.classList.add('active'); ws.style.display = 'flex';
         buildUI();
     } else {
-        const target = document.getElementById(tabId);
-        target.classList.add('active');
-        target.style.display = 'flex';
+        const target = document.getElementById(tabId); target.classList.add('active'); target.style.display = 'flex';
     }
 }
 
@@ -525,9 +478,7 @@ function buildUI() {
     const strip = document.getElementById('mission-strip');
     const title = document.getElementById('mission-title');
     
-    toolbox.innerHTML = '';
-    toolbox.className = currentTab === 'g4' ? 'toolbox g4-toolbox' : 'toolbox';
-    
+    toolbox.innerHTML = ''; toolbox.className = currentTab === 'g4' ? 'toolbox g4-toolbox' : 'toolbox';
     strip.className = 'mission-strip';
     if (currentTab === 'g4') strip.classList.add('g4-strip');
     if (currentTab === 'g5') strip.classList.add('g5-strip');
@@ -538,6 +489,8 @@ function buildUI() {
     const commands = COMMAND_LIBRARIES[activeRobotId][currentTab];
     if (commands) {
         commands.forEach(cmd => {
+            if (cmd.adv && !appConfig.advancedMode) return; 
+            
             const btn = document.createElement('div');
             btn.className = cmd.class;
             btn.innerHTML = currentTab === 'g2' ? cmd.icon : `${cmd.icon} ${cmd.label}`;
@@ -550,39 +503,22 @@ function buildUI() {
     renderMission();
 }
 
-function addCmd(cmdObj) {
-    if (cmdObj.code === '' && mission.length > 0) return;
-    mission.push({ ...cmdObj, id: Date.now() });
-    renderMission();
-}
-
-function removeCmd(index) {
-    playUISound('click');
-    mission.splice(index, 1);
-    renderMission();
-}
-
+function addCmd(cmdObj) { if (cmdObj.code === '' && mission.length > 0) return; mission.push({ ...cmdObj, id: Date.now() }); renderMission(); }
+function removeCmd(index) { playUISound('click'); mission.splice(index, 1); renderMission(); }
 function clearMission() { mission = []; renderMission(); }
 
 function renderMission() {
-    const strip = document.getElementById('mission-strip');
-    strip.innerHTML = '';
-    
+    const strip = document.getElementById('mission-strip'); strip.innerHTML = '';
     mission.forEach((cmd, index) => {
-        const div = document.createElement('div');
-        div.className = 'mission-item';
-        div.id = `cmd-${index}`;
-        
+        const div = document.createElement('div'); div.className = 'mission-item'; div.id = `cmd-${index}`;
         if (currentTab === 'g2') div.innerHTML = `<span style="font-size: 2rem;">${cmd.icon}</span>`;
         else if (currentTab === 'g3') div.innerHTML = `${cmd.icon} ${cmd.label}`;
         else if (currentTab === 'g4') { div.style.background = 'transparent'; div.style.color = '#34d399'; div.innerText = cmd.label; }
         else if (currentTab === 'g5') { div.style.background = cmd.code === '' ? 'var(--warning)' : 'var(--secondary)'; div.innerText = cmd.label; }
 
-        const rm = document.createElement('div');
-        rm.className = 'remove'; rm.innerHTML = '×';
+        const rm = document.createElement('div'); rm.className = 'remove'; rm.innerHTML = '×';
         rm.onclick = (e) => { e.stopPropagation(); removeCmd(index); };
-        div.appendChild(rm);
-        strip.appendChild(div);
+        div.appendChild(rm); strip.appendChild(div);
     });
 }
 
@@ -592,95 +528,137 @@ function logTerminal(msg, type="info") {
     if (type === "rx") { color = "#60a5fa"; prefix = "⬅ "; }
     if (type === "tx") { color = "#f472b6"; prefix = "➡ "; }
     if (type === "success") { color = "var(--warning)"; prefix = "⭐ "; }
-
     term.innerHTML += `<span style="color:${color}">${prefix}${msg}</span><br>`;
     term.scrollTop = term.scrollHeight;
 }
 
 // ════════════════════════════════════════════════════════════
-// BLUETOOTH (BLE) CONNECTION
+// VOICE CONTROL & ON-SCREEN FEEDBACK
+// ════════════════════════════════════════════════════════════
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null; let isListening = false;
+
+function showVoiceFeedback(text, type="info") {
+    const fb = document.getElementById('voice-feedback');
+    fb.innerHTML = type === 'success' ? `✅ "${text}"` : `🎙️ Heard: "${text}"`;
+    fb.style.backgroundColor = type === 'success' ? 'var(--success)' : 'rgba(15, 23, 42, 0.9)';
+    fb.classList.add('show'); setTimeout(() => fb.classList.remove('show'), 3500);
+}
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition(); recognition.continuous = false; recognition.interimResults = false;
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        processVoiceCommand(transcript); stopVoiceControl();
+    };
+    recognition.onerror = (e) => { showVoiceFeedback("Error: " + e.error); stopVoiceControl(); };
+    recognition.onend = () => { stopVoiceControl(); };
+}
+
+function toggleVoiceControl() {
+    if (!SpeechRecognition) { alert("Voice recognition not supported. Try Chrome."); return; }
+    if (isListening) { recognition.stop(); stopVoiceControl(); } 
+    else {
+        if (!isConnected) { alert("Please connect via BLE first!"); return; }
+        playUISound('success'); recognition.lang = appConfig.voiceLang; recognition.start();
+        isListening = true;
+        const btn = document.getElementById('btn-voice'); btn.classList.add('listening'); btn.innerHTML = '🔴 Listening...';
+        showVoiceFeedback("Listening...");
+    }
+}
+
+function stopVoiceControl() {
+    isListening = false;
+    const btn = document.getElementById('btn-voice');
+    btn.classList.remove('listening'); btn.innerHTML = '🎙️ Voice Command';
+}
+
+function processVoiceCommand(text) {
+    let matchedCode = null; let matchedIntent = "";
+    for (const word of VOCABULARY) {
+        const enWords = word.en.toLowerCase().split(' / ');
+        const zhWords = word.zh.toLowerCase().split(' / ').map(w => w.split(' (')[0].trim());
+        if (enWords.some(w => text.includes(w)) || zhWords.some(w => text.includes(w))) {
+            matchedCode = word.code; matchedIntent = word.action; break;
+        }
+    }
+    if (matchedCode) {
+        playUISound('success'); showVoiceFeedback(matchedIntent, "success"); sendRaw(matchedCode);
+    } else {
+        showVoiceFeedback(text, "info"); logTerminal("❓ Not recognized.", "info");
+    }
+}
+
+// ════════════════════════════════════════════════════════════
+// BLUETOOTH (BLE) & IDLE BEHAVIOR ENGINE
 // ════════════════════════════════════════════════════════════
 let bleDevice = null; let bleServer = null; let bleWriteChar = null; let isConnected = false;
 
-async function toggleConnection() {
-    if (isConnected) await disconnectBLE(); else await connectBLE();
-}
+async function toggleConnection() { if (isConnected) await disconnectBLE(); else await connectBLE(); }
 
 async function connectBLE() {
     if (!navigator.bluetooth) { alert("Web Bluetooth requires Chrome or Edge."); return; }
     playUISound('click');
-
     const profile = ROBOT_PROFILES[activeRobotId];
     try {
-        bleDevice = await navigator.bluetooth.requestDevice({
-            filters: profile.filters, optionalServices: [profile.serviceUUID]
-        });
+        bleDevice = await navigator.bluetooth.requestDevice({ filters: profile.filters, optionalServices: [profile.serviceUUID] });
         bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-        
         bleServer = await bleDevice.gatt.connect();
         const service = await bleServer.getPrimaryService(profile.serviceUUID);
-        
         bleWriteChar = await service.getCharacteristic(profile.txUUID);
         const bleReadChar = await service.getCharacteristic(profile.rxUUID);
         
         await bleReadChar.startNotifications();
-        bleReadChar.addEventListener('characteristicvaluechanged', (e) => {
-            logTerminal(new TextDecoder('utf-8').decode(e.target.value).trim(), "rx");
-        });
+        bleReadChar.addEventListener('characteristicvaluechanged', (e) => logTerminal(new TextDecoder('utf-8').decode(e.target.value).trim(), "rx"));
 
-        isConnected = true;
-        playUISound('connect');
-        updateUI();
-        logTerminal(`✅ ${profile.name} Connected!`, "info");
-
-        // Startup Behavior Sequence
+        isConnected = true; playUISound('connect'); updateUI(); lastCommandTime = Date.now();
+        
         setTimeout(() => {
-            if (activeRobotId === 'bittle') sendRaw('z'); // Silence random mind
+            if (activeRobotId === 'bittle') {
+                sendRaw('z'); // Silence random mind
+                if (!appConfig.hwVoice) setTimeout(() => sendRaw('XAd'), 200); // Apply HW voice config
+            }
             if (appConfig.robotStartup) setTimeout(() => sendRaw(profile.startupCmd), 500);
         }, 800);
-
-    } catch (error) { console.error(error); }
+    } catch (e) { console.error(e); }
 }
 
 async function disconnectBLE() { if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect(); }
-
 function onDisconnected() {
     isConnected = false; bleDevice = null; bleServer = null; bleWriteChar = null;
-    playUISound('click'); updateUI(); logTerminal("❌ Disconnected.", "info");
+    playUISound('click'); updateUI();
 }
 
 function updateUI() {
-    const header = document.getElementById('header-bar');
-    const status = document.getElementById('status-text');
-    const btn = document.getElementById('connect-btn');
-
+    const header = document.getElementById('header-bar'); const status = document.getElementById('status-text'); const btn = document.getElementById('connect-btn');
     if (isConnected) {
-        header.classList.add('connected');
-        status.innerHTML = `<b>${ROBOT_PROFILES[activeRobotId].name} Connected! 🔵</b>`;
-        btn.textContent = '❌ Disconnect'; btn.className = 'btn btn-disconnect';
-        document.getElementById('robot-select').disabled = true;
+        header.classList.add('connected'); status.innerHTML = `<b>${ROBOT_PROFILES[activeRobotId].name} Connected! 🔵</b>`;
+        btn.textContent = '❌ Disconnect'; btn.className = 'btn btn-disconnect'; document.getElementById('robot-select').disabled = true;
     } else {
-        header.classList.remove('connected');
-        status.textContent = 'Disconnected';
-        btn.textContent = '⚡ Connect via BLE'; btn.className = 'btn btn-connect';
-        document.getElementById('robot-select').disabled = false;
+        header.classList.remove('connected'); status.textContent = 'Disconnected';
+        btn.textContent = '⚡ Connect via BLE'; btn.className = 'btn btn-connect'; document.getElementById('robot-select').disabled = false;
     }
 }
 
 async function sendRaw(cmdCode) {
     if (!isConnected || !bleWriteChar) return;
     try {
+        lastCommandTime = Date.now(); 
         const payload = ROBOT_PROFILES[activeRobotId].formatPayload(cmdCode);
         await bleWriteChar.writeValue(payload);
-        logTerminal(Array.isArray(cmdCode) ? `[Byte Array sent]` : cmdCode, "tx");
-    } catch (e) { logTerminal(`Send Error: ${e}`, "info"); }
+        logTerminal(Array.isArray(cmdCode) ? `[Byte Array]` : cmdCode, "tx");
+    } catch (e) { logTerminal(`Error: ${e}`, "info"); }
 }
 
-function submitRaw() {
-    const val = document.getElementById('raw-input').value.trim();
-    if(val) { sendRaw(val); document.getElementById('raw-input').value = ''; }
-}
-document.getElementById('raw-input').addEventListener('keypress', e => { if(e.key==='Enter') submitRaw(); });
+function submitRaw() { const val = document.getElementById('raw-input').value.trim(); if(val) { sendRaw(val); document.getElementById('raw-input').value = ''; } }
+
+setInterval(() => {
+    if (isConnected && appConfig.idleBehavior && !isRunning && Date.now() - lastCommandTime > 12000) {
+        const cmds = ROBOT_PROFILES[activeRobotId].idleCmds;
+        logTerminal("💤 Executing Idle Fidget...", "info");
+        sendRaw(cmds[Math.floor(Math.random() * cmds.length)]);
+    }
+}, 1000);
 
 // ════════════════════════════════════════════════════════════
 // MISSION EXECUTION
@@ -694,8 +672,7 @@ async function runMission() {
     btnGo.disabled = true; btnGo.textContent = '⏳ RUNNING...';
 
     for (let i = 0; i < mission.length; i++) {
-        const cmd = mission[i];
-        if (cmd.code === '') continue;
+        const cmd = mission[i]; if (cmd.code === '') continue;
 
         document.querySelectorAll('.mission-item').forEach(el => el.classList.remove('active-glow'));
         const activeDom = document.getElementById(`cmd-${i}`);
@@ -706,9 +683,7 @@ async function runMission() {
     }
 
     document.querySelectorAll('.mission-item').forEach(el => el.classList.remove('active-glow'));
-    playUISound('success');
-    isRunning = false;
-    btnGo.disabled = false; btnGo.innerHTML = '▶ RUN CODE';
+    playUISound('success'); isRunning = false; btnGo.disabled = false; btnGo.innerHTML = '▶ RUN CODE';
 }
 
 buildUI();
