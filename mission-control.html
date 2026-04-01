@@ -432,19 +432,12 @@ async function toggleConnection() { if (isConnected) await disconnectBLE(); else
 async function connectBLE() {
     if (!navigator.bluetooth) { alert("Web Bluetooth requires Chrome or Edge."); return; }
     try {
-        // First check if we already have permission to a paired device
-        let devices = await navigator.bluetooth.getDevices();
-        let targetDevice = devices.find(d => d.name && d.name.toLowerCase().includes('bittle'));
-        
-        // If not, prompt the user
-        if (!targetDevice) {
-            targetDevice = await navigator.bluetooth.requestDevice({ 
-                filters: [{ namePrefix: 'Bittle' }, { namePrefix: 'bittle' }], 
-                optionalServices: [BITTLE_SERVICE] 
-            });
-        }
+        // Reverted to standard, reliable requestDevice prompt
+        bleDevice = await navigator.bluetooth.requestDevice({ 
+            filters: [{ namePrefix: 'Bittle' }], 
+            optionalServices: [BITTLE_SERVICE] 
+        });
 
-        bleDevice = targetDevice;
         bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
         
         bleServer = await bleDevice.gatt.connect();
@@ -464,7 +457,10 @@ async function connectBLE() {
             if (!appConfig.robotChirp) setTimeout(() => sendRaw('XAb'), 300);
             if (appConfig.robotStartup) setTimeout(() => sendRaw('b14 8 14 8 21 8'), 450);
         }, 500);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error(e); 
+        logTerminal(`Connection Failed: ${e.message}`, "info"); 
+    }
 }
 
 async function disconnectBLE() { if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect(); }
@@ -497,6 +493,7 @@ function submitRaw() {
     if(val) { sendRaw(val); document.getElementById('raw-input').value = ''; } 
 }
 
+// Fidget behavior loop
 setInterval(() => {
     if (isConnected && appConfig.idleBehavior && !isRunning && Date.now() - lastCommandTime > 15000) {
         const idles = ['khi', 'kstr', 'kck', 'ksit'];
