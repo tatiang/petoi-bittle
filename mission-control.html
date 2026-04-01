@@ -224,17 +224,19 @@
 const ROBOT_PROFILES = {
     bittle: {
         name: "Petoi Bittle",
-        serviceUUID: '0000ffe0-0000-1000-8000-00805f9b34fb',
-        charUUID:    '0000ffe1-0000-1000-8000-00805f9b34fb',
+        // UPDATED: Nordic UART Service UUIDs
+        serviceUUID: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+        txUUID:      '6e400002-b5a3-f393-e0a9-e50e24dcca9e', // Write (Send to Robot)
+        rxUUID:      '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // Read (Listen to Robot)
         formatPayload: (cmd) => new TextEncoder('utf-8').encode(cmd + '\n'),
-        filters: [{ namePrefix: 'Bittle' }, { namePrefix: 'bittle' }]
+        filters: [{ namePrefix: 'Bittle' }, { namePrefix: 'bittle' }, { namePrefix: 'Bittle77' }]
     },
     mbot: {
         name: "Makeblock mBot",
-        // Note: Makeblock uses different BLE UUIDs depending on the dongle. 
-        // FFE1 is standard for Makeblock BLE modules.
+        // mBot usually uses the same FFE2 characteristic for both TX and RX
         serviceUUID: '0000ffe1-0000-1000-8000-00805f9b34fb', 
-        charUUID:    '0000ffe2-0000-1000-8000-00805f9b34fb',
+        txUUID:      '0000ffe2-0000-1000-8000-00805f9b34fb',
+        rxUUID:      '0000ffe2-0000-1000-8000-00805f9b34fb',
         formatPayload: (cmdArray) => new Uint8Array(cmdArray),
         filters: [{ namePrefix: 'Makeblock' }, { namePrefix: 'mBot' }]
     }
@@ -262,7 +264,7 @@ const COMMAND_LIBRARIES = {
             { label: 'robot.stretch();', code: 'kstr', icon: '', class: 'g4-btn' }
         ],
         g5: [
-            { label: 'When 🟢 Clicked',   code: '',     icon: '🏁', class: 'g5-btn event' },
+            { label: 'When 🟢 Clicked',   code: '',    icon: '🏁', class: 'g5-btn event' },
             { label: 'Move Steps (Walk)', code: 'kwkF', icon: '🟦', class: 'g5-btn action' },
             { label: 'Change Pose (Sit)', code: 'ksit', icon: '🟦', class: 'g5-btn action' },
             { label: 'Play Anim (Wave)',  code: 'khi',  icon: '🟦', class: 'g5-btn action' }
@@ -432,7 +434,7 @@ function logTerminal(msg, type="info") {
 // ════════════════════════════════════════════════════════════
 let bleDevice = null;
 let bleServer = null;
-let bleCharacteristic = null;
+let bleWriteChar = null; // UPDATED: Distinct variable for sending data
 let isConnected = false;
 
 async function toggleConnection() {
@@ -464,11 +466,17 @@ async function connectBLE() {
         logTerminal("Getting Service...");
         const service = await bleServer.getPrimaryService(profile.serviceUUID);
 
-        logTerminal("Getting Characteristic...");
-        bleCharacteristic = await service.getCharacteristic(profile.charUUID);
+        logTerminal("Setting up RX/TX Channels...");
         
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', handleBLEData);
+        // 1. Get the characteristic used for WRITING commands to the robot
+        bleWriteChar = await service.getCharacteristic(profile.txUUID);
+        
+        // 2. Get the characteristic used for READING responses from the robot
+        const bleReadChar = await service.getCharacteristic(profile.rxUUID);
+        
+        // 3. Start listening on the READ characteristic only
+        await bleReadChar.startNotifications();
+        bleReadChar.addEventListener('characteristicvaluechanged', handleBLEData);
 
         isConnected = true;
         updateUI();
@@ -493,7 +501,7 @@ async function disconnectBLE() {
 
 function onDisconnected() {
     isConnected = false;
-    bleDevice = null; bleServer = null; bleCharacteristic = null;
+    bleDevice = null; bleServer = null; bleWriteChar = null;
     logTerminal("❌ Disconnected.", "info");
     updateUI();
 }
@@ -527,14 +535,16 @@ function handleBLEData(event) {
 }
 
 async function sendRaw(cmdCode) {
-    if (!isConnected || !bleCharacteristic) {
+    if (!isConnected || !bleWriteChar) {
         logTerminal("Cannot send: Not connected.", "info");
         return;
     }
     try {
         // Use the active profile to format the command properly (String vs Bytes)
         const payload = ROBOT_PROFILES[activeRobotId].formatPayload(cmdCode);
-        await bleCharacteristic.writeValue(payload);
+        
+        // UPDATED: Use the specific Write Characteristic
+        await bleWriteChar.writeValue(payload);
         
         // Log what was sent
         const logMsg = Array.isArray(cmdCode) ? `[Byte Array sent]` : cmdCode;
