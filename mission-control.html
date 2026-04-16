@@ -122,6 +122,26 @@
         .adv-toggle-container { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #ef4444; }
 
         @keyframes pulseRecord { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* micro:bit panel */
+        .microbit-panel { display: flex; flex-direction: column; gap: 20px; padding: 20px; }
+        .microbit-section { background: var(--bg-color); border-radius: 12px; padding: 15px; }
+        .microbit-section h3 { margin: 0 0 15px; color: #1e293b; }
+        .microbit-connect-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .btn-microbit { background: #00c853; color: white; }
+        .led-grid { display: grid; grid-template-columns: repeat(5, 44px); gap: 6px; margin: 12px 0; }
+        .led-cell { width: 44px; height: 44px; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 50%; cursor: pointer; transition: 0.15s; }
+        .led-cell.on { background: #ef4444; border-color: #b91c1c; box-shadow: 0 0 8px #ef4444; }
+        .led-preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+        .btn-led-preset { background: #1e293b; color: #fbbf24; border: none; border-radius: 8px; padding: 8px 14px; font-size: 1.3rem; cursor: pointer; transition: 0.2s; line-height: 1; }
+        .btn-led-preset:hover { background: #334155; transform: scale(1.08); }
+        .led-text-row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+        .led-text-row input { flex-grow: 1; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        .sensor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+        .sensor-card { background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; text-align: center; }
+        .sensor-val { font-size: 1.8rem; font-weight: bold; color: var(--secondary); }
+        .sensor-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+        .mb-pairing-note { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 15px; font-size: 0.9rem; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -142,6 +162,7 @@
     <button class="tab-btn" onclick="switchTab('g45')">Grades 4-5 (Logic)</button>
     <button class="tab-btn" onclick="switchTab('g6')">Grade 6 (Raw/C++)</button>
     <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+    <button class="tab-btn" onclick="switchTab('microbit')">🟡 micro:bit</button>
 </div>
 
 <main>
@@ -209,6 +230,56 @@
                 </select>
             </div>
             <button class="btn btn-success" style="background: var(--success); color:white; font-size: 1.2rem; padding: 15px;" onclick="saveSettings()">💾 Save Configurations</button>
+        </div>
+    </div>
+
+    <div id="microbit" class="tab-content">
+        <div class="microbit-panel">
+            <div class="mb-pairing-note">
+                ⚠️ <strong>Setup Required:</strong> Your micro:bit v2 needs a Bluetooth-enabled MakeCode hex file. In MakeCode, add the <strong>Bluetooth extension</strong>, set <em>No Pairing Required</em> in project settings, then flash to your micro:bit.
+            </div>
+            <div class="microbit-section">
+                <h3>🔌 micro:bit v2 Connection</h3>
+                <div class="microbit-connect-row">
+                    <span class="status-dot" id="mb-status-dot"></span>
+                    <span id="mb-status-text" style="font-weight:bold">Not Connected</span>
+                    <button id="mb-connect-btn" class="btn btn-microbit" onclick="toggleMicrobitConnection()">Connect micro:bit</button>
+                </div>
+            </div>
+            <div class="microbit-section" id="mb-controls" style="display:none">
+                <h3>💡 LED Matrix</h3>
+                <div class="led-preset-row">
+                    <button class="btn-led-preset" onclick="setLedPreset('heart')" title="Heart">❤️</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('smile')" title="Smile">😊</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('sad')" title="Sad">😢</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('tick')" title="Tick / Yes">✅</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('cross')" title="Cross / No">❌</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('all')" title="All On">⬜</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('clear')" title="Clear">⬛</button>
+                </div>
+                <div class="led-grid" id="led-grid"></div>
+                <div class="led-text-row">
+                    <input type="text" id="mb-text-input" placeholder="Type text to scroll on LED..." maxlength="20">
+                    <button class="btn btn-microbit" onclick="sendMicrobitText()">Send Text</button>
+                </div>
+            </div>
+            <div class="microbit-section" id="mb-sensors" style="display:none">
+                <h3>📊 Sensors</h3>
+                <div class="sensor-grid">
+                    <div class="sensor-card">
+                        <div class="sensor-val" id="mb-temp">--</div>
+                        <div class="sensor-label">🌡️ Temperature (°C)</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-val" id="mb-btn-a">--</div>
+                        <div class="sensor-label">Button A</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-val" id="mb-btn-b">--</div>
+                        <div class="sensor-label">Button B</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -299,8 +370,9 @@ function switchTab(tabId) {
         document.getElementById('g6-terminal-area').style.display = tabId === 'g6' ? 'block' : 'none';
         buildUI();
     } else {
-        const target = document.getElementById(tabId); 
+        const target = document.getElementById(tabId);
         target.classList.add('active'); target.style.display = 'flex';
+        if (tabId === 'microbit') initLedGrid();
     }
 }
 
@@ -526,6 +598,154 @@ async function runMission() {
 
     document.querySelectorAll('.mission-item').forEach(el => el.classList.remove('active-glow'));
     isRunning = false; btnGo.disabled = false; btnGo.innerHTML = '▶ RUN CODE';
+}
+
+// ════════════════════════════════════════════════════════════
+// MICRO:BIT v2 BLUETOOTH
+// ════════════════════════════════════════════════════════════
+const MB_LED_SERVICE     = 'e95dd91d-251d-470a-a062-fa1922dfa9a8';
+const MB_LED_MATRIX_CHAR = 'e95d7b77-251d-470a-a062-fa1922dfa9a8';
+const MB_LED_TEXT_CHAR   = 'e95d93ee-251d-470a-a062-fa1922dfa9a8';
+const MB_BTN_SERVICE  = 'e95d9882-251d-470a-a062-fa1922dfa9a8';
+const MB_BTN_A_CHAR   = 'e95dda90-251d-470a-a062-fa1922dfa9a8';
+const MB_BTN_B_CHAR   = 'e95dda91-251d-470a-a062-fa1922dfa9a8';
+const MB_TEMP_SERVICE = 'e95d6100-251d-470a-a062-fa1922dfa9a8';
+const MB_TEMP_CHAR    = 'e95d9250-251d-470a-a062-fa1922dfa9a8';
+
+let mbDevice = null, mbLedMatrixChar = null, mbLedTextChar = null, mbIsConnected = false;
+let mbLedState = Array(25).fill(0);
+
+function toggleMicrobitConnection() {
+    if (mbIsConnected) disconnectMicrobit(); else connectMicrobit();
+}
+
+async function connectMicrobit() {
+    if (!navigator.bluetooth) { alert('Web Bluetooth requires Chrome or Edge.'); return; }
+    try {
+        mbDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'BBC micro:bit' }],
+            optionalServices: [MB_LED_SERVICE, MB_BTN_SERVICE, MB_TEMP_SERVICE]
+        });
+        mbDevice.addEventListener('gattserverdisconnected', onMicrobitDisconnected);
+        const server = await mbDevice.gatt.connect();
+
+        const ledService = await server.getPrimaryService(MB_LED_SERVICE);
+        mbLedMatrixChar = await ledService.getCharacteristic(MB_LED_MATRIX_CHAR);
+        mbLedTextChar   = await ledService.getCharacteristic(MB_LED_TEXT_CHAR);
+
+        try {
+            const tempService = await server.getPrimaryService(MB_TEMP_SERVICE);
+            const tempChar = await tempService.getCharacteristic(MB_TEMP_CHAR);
+            await tempChar.startNotifications();
+            tempChar.addEventListener('characteristicvaluechanged', e => {
+                document.getElementById('mb-temp').textContent = e.target.value.getInt8(0) + '°C';
+            });
+        } catch (_) {}
+
+        try {
+            const btnService = await server.getPrimaryService(MB_BTN_SERVICE);
+            const btnA = await btnService.getCharacteristic(MB_BTN_A_CHAR);
+            const btnB = await btnService.getCharacteristic(MB_BTN_B_CHAR);
+            await btnA.startNotifications();
+            await btnB.startNotifications();
+            btnA.addEventListener('characteristicvaluechanged', e =>
+                document.getElementById('mb-btn-a').textContent = e.target.value.getUint8(0) ? 'Pressed' : 'Released');
+            btnB.addEventListener('characteristicvaluechanged', e =>
+                document.getElementById('mb-btn-b').textContent = e.target.value.getUint8(0) ? 'Pressed' : 'Released');
+        } catch (_) {}
+
+        mbIsConnected = true;
+        updateMicrobitUI();
+    } catch (e) {
+        console.error(e);
+        if (e.name !== 'NotFoundError') alert('Could not connect to micro:bit: ' + e.message);
+    }
+}
+
+function disconnectMicrobit() {
+    if (mbDevice && mbDevice.gatt.connected) mbDevice.gatt.disconnect();
+}
+
+function onMicrobitDisconnected() {
+    mbIsConnected = false; mbDevice = null; mbLedMatrixChar = null; mbLedTextChar = null;
+    updateMicrobitUI();
+}
+
+function updateMicrobitUI() {
+    const dot      = document.getElementById('mb-status-dot');
+    const text     = document.getElementById('mb-status-text');
+    const btn      = document.getElementById('mb-connect-btn');
+    const controls = document.getElementById('mb-controls');
+    const sensors  = document.getElementById('mb-sensors');
+    if (mbIsConnected) {
+        dot.style.cssText = 'background:var(--success);box-shadow:0 0 8px var(--success)';
+        text.textContent  = 'Connected: ' + mbDevice.name;
+        btn.textContent   = '❌ Disconnect';
+        btn.style.background = 'var(--danger)';
+        controls.style.display = sensors.style.display = 'block';
+    } else {
+        dot.style.cssText = '';
+        text.textContent  = 'Not Connected';
+        btn.textContent   = 'Connect micro:bit';
+        btn.style.background = '#00c853';
+        controls.style.display = sensors.style.display = 'none';
+    }
+}
+
+function initLedGrid() {
+    const grid = document.getElementById('led-grid');
+    if (!grid || grid.children.length > 0) return;
+    for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'led-cell'; cell.id = `led-${i}`;
+        cell.onclick = () => toggleLedCell(i);
+        grid.appendChild(cell);
+    }
+}
+
+function toggleLedCell(idx) {
+    mbLedState[idx] ^= 1;
+    document.getElementById(`led-${idx}`).classList.toggle('on', mbLedState[idx] === 1);
+    sendMicrobitLedMatrix();
+}
+
+function setLedPreset(name) {
+    const P = {
+        heart: [0,1,0,1,0, 1,1,1,1,1, 1,1,1,1,1, 0,1,1,1,0, 0,0,1,0,0],
+        smile: [0,1,0,1,0, 0,1,0,1,0, 0,0,0,0,0, 1,0,0,0,1, 0,1,1,1,0],
+        sad:   [0,1,0,1,0, 0,1,0,1,0, 0,0,0,0,0, 0,1,1,1,0, 1,0,0,0,1],
+        tick:  [0,0,0,0,0, 0,0,0,0,1, 0,0,0,1,0, 1,0,1,0,0, 0,1,0,0,0],
+        cross: [1,0,0,0,1, 0,1,0,1,0, 0,0,1,0,0, 0,1,0,1,0, 1,0,0,0,1],
+        all:   Array(25).fill(1),
+        clear: Array(25).fill(0)
+    };
+    mbLedState = [...(P[name] || P.clear)];
+    for (let i = 0; i < 25; i++) {
+        const cell = document.getElementById(`led-${i}`);
+        if (cell) cell.classList.toggle('on', mbLedState[i] === 1);
+    }
+    sendMicrobitLedMatrix();
+}
+
+function sendMicrobitLedMatrix() {
+    if (!mbLedMatrixChar) return;
+    const bytes = new Uint8Array(5);
+    for (let row = 0; row < 5; row++) {
+        let val = 0;
+        for (let col = 0; col < 5; col++) {
+            if (mbLedState[row * 5 + col]) val |= (1 << (4 - col));
+        }
+        bytes[row] = val;
+    }
+    mbLedMatrixChar.writeValue(bytes).catch(console.error);
+}
+
+async function sendMicrobitText() {
+    const input = document.getElementById('mb-text-input');
+    const text = input.value.trim();
+    if (!text || !mbLedTextChar) return;
+    await mbLedTextChar.writeValue(new TextEncoder().encode(text)).catch(console.error);
+    input.value = '';
 }
 
 buildUI();
