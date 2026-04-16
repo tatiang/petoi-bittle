@@ -142,6 +142,19 @@
         .sensor-val { font-size: 1.8rem; font-weight: bold; color: var(--secondary); }
         .sensor-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
         .mb-pairing-note { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 15px; font-size: 0.9rem; line-height: 1.6; }
+        .mb-subtab-bar { display: flex; gap: 6px; margin-bottom: 4px; }
+        .mb-subtab-btn { background: #e2e8f0; border: none; border-radius: 8px 8px 0 0; padding: 8px 18px; font-size: 0.9rem; font-weight: bold; cursor: pointer; color: #475569; transition: 0.15s; }
+        .mb-subtab-btn.active { background: var(--bg-color); color: var(--secondary); }
+        .mb-subtab-pane { display: none; }
+        .mb-subtab-pane.active { display: block; }
+        .mb-log-box { background: #0f172a; border-radius: 8px; padding: 12px; min-height: 120px; max-height: 280px; overflow-y: auto; font-family: monospace; font-size: 0.82rem; }
+        .mb-log-entry { color: #94a3b8; line-height: 1.6; }
+        .mb-log-entry.ok { color: #4ade80; }
+        .mb-log-entry.warn { color: #fbbf24; }
+        .mb-log-entry.err { color: #f87171; }
+        .mb-device-info { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 0.88rem; margin-bottom: 12px; }
+        .mb-device-info dt { color: #64748b; font-weight: bold; }
+        .mb-device-info dd { margin: 0; color: #1e293b; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -246,38 +259,62 @@
                     <button id="mb-connect-btn" class="btn btn-microbit" onclick="toggleMicrobitConnection()">Connect micro:bit</button>
                 </div>
             </div>
-            <div class="microbit-section" id="mb-controls" style="display:none">
-                <h3>💡 LED Matrix</h3>
-                <div id="mb-led-unavailable" style="display:none; background:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:10px; margin-bottom:10px; font-size:0.9rem;">
-                    ⚠️ LED service not found. Make sure your MakeCode project includes the <strong>Bluetooth extension</strong> with the LED service enabled.
+
+            <!-- Sub-tab navigation -->
+            <div class="mb-subtab-bar">
+                <button class="mb-subtab-btn active" id="mb-stab-controls" onclick="switchMbTab('controls')">🎮 Controls</button>
+                <button class="mb-subtab-btn" id="mb-stab-log" onclick="switchMbTab('log')">📋 Connection Log</button>
+            </div>
+
+            <!-- Controls sub-tab -->
+            <div class="mb-subtab-pane active" id="mb-pane-controls">
+                <div class="microbit-section" id="mb-controls" style="display:none">
+                    <h3>💡 LED Matrix</h3>
+                    <div id="mb-led-unavailable" style="display:none; background:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:10px; margin-bottom:10px; font-size:0.9rem;">
+                        ⚠️ LED service not found. Make sure your MakeCode project includes the <strong>Bluetooth extension</strong> with the LED service enabled.
+                    </div>
+                    <div class="led-preset-row">
+                        <button class="btn-led-preset" onclick="setLedPreset('heart')">❤️ Heart</button>
+                        <button class="btn-led-preset" onclick="setLedPreset('tick')">✔ Checkmark</button>
+                        <button class="btn-led-preset" onclick="setLedPreset('all')">⬜ All On</button>
+                        <button class="btn-led-preset" onclick="setLedPreset('clear')">⬛ All Off</button>
+                    </div>
+                    <div class="led-grid" id="led-grid"></div>
+                    <div class="led-text-row">
+                        <input type="text" id="mb-text-input" placeholder="Type text to scroll on LED..." maxlength="20">
+                        <button class="btn btn-microbit" onclick="sendMicrobitText()">Send Text</button>
+                    </div>
                 </div>
-                <div class="led-preset-row">
-                    <button class="btn-led-preset" onclick="setLedPreset('heart')">❤️ Heart</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('tick')">✔ Checkmark</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('all')">⬜ All On</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('clear')">⬛ All Off</button>
-                </div>
-                <div class="led-grid" id="led-grid"></div>
-                <div class="led-text-row">
-                    <input type="text" id="mb-text-input" placeholder="Type text to scroll on LED..." maxlength="20">
-                    <button class="btn btn-microbit" onclick="sendMicrobitText()">Send Text</button>
+                <div class="microbit-section" id="mb-sensors" style="display:none">
+                    <h3>📊 Sensors</h3>
+                    <div class="sensor-grid">
+                        <div class="sensor-card">
+                            <div class="sensor-val" id="mb-temp">--</div>
+                            <div class="sensor-label">🌡️ Temperature (°C)</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-val" id="mb-btn-a">--</div>
+                            <div class="sensor-label">Button A</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-val" id="mb-btn-b">--</div>
+                            <div class="sensor-label">Button B</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="microbit-section" id="mb-sensors" style="display:none">
-                <h3>📊 Sensors</h3>
-                <div class="sensor-grid">
-                    <div class="sensor-card">
-                        <div class="sensor-val" id="mb-temp">--</div>
-                        <div class="sensor-label">🌡️ Temperature (°C)</div>
+
+            <!-- Connection Log sub-tab -->
+            <div class="mb-subtab-pane" id="mb-pane-log">
+                <div class="microbit-section">
+                    <h3>📋 Connection Log</h3>
+                    <div id="mb-device-info-wrap" style="display:none">
+                        <dl class="mb-device-info" id="mb-device-info"></dl>
                     </div>
-                    <div class="sensor-card">
-                        <div class="sensor-val" id="mb-btn-a">--</div>
-                        <div class="sensor-label">Button A</div>
+                    <div class="mb-log-box" id="mb-log-box">
+                        <div class="mb-log-entry">No connection attempts yet.</div>
                     </div>
-                    <div class="sensor-card">
-                        <div class="sensor-val" id="mb-btn-b">--</div>
-                        <div class="sensor-label">Button B</div>
-                    </div>
+                    <button class="btn" style="margin-top:10px;font-size:0.8rem;padding:6px 14px;background:#e2e8f0;color:#475569" onclick="clearMbLog()">Clear Log</button>
                 </div>
             </div>
         </div>
@@ -615,19 +652,62 @@ const MB_TEMP_CHAR    = 'e95d9250-251d-470a-a062-fa1922dfa9a8';
 let mbDevice = null, mbLedMatrixChar = null, mbLedTextChar = null, mbIsConnected = false;
 let mbLedState = Array(25).fill(0);
 
+function switchMbTab(name) {
+    document.querySelectorAll('.mb-subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mb-subtab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('mb-stab-' + name).classList.add('active');
+    document.getElementById('mb-pane-' + name).classList.add('active');
+}
+
+function logMbEvent(msg, type) {
+    const box = document.getElementById('mb-log-box');
+    const now = new Date().toLocaleTimeString();
+    if (box.children.length === 1 && box.children[0].textContent === 'No connection attempts yet.') {
+        box.innerHTML = '';
+    }
+    const el = document.createElement('div');
+    el.className = 'mb-log-entry' + (type ? ' ' + type : '');
+    el.textContent = '[' + now + '] ' + msg;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+}
+
+function clearMbLog() {
+    document.getElementById('mb-log-box').innerHTML = '<div class="mb-log-entry">Log cleared.</div>';
+    document.getElementById('mb-device-info-wrap').style.display = 'none';
+    document.getElementById('mb-device-info').innerHTML = '';
+}
+
+function renderMbDeviceInfo() {
+    if (!mbDevice) return;
+    const wrap = document.getElementById('mb-device-info-wrap');
+    const dl   = document.getElementById('mb-device-info');
+    const rows = [
+        ['Name', mbDevice.name || '(unavailable)'],
+        ['Browser ID', mbDevice.id || '(unavailable)'],
+    ];
+    dl.innerHTML = rows.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    wrap.style.display = 'block';
+}
+
 function toggleMicrobitConnection() {
     if (mbIsConnected) disconnectMicrobit(); else connectMicrobit();
 }
 
 async function connectMicrobit() {
     if (!navigator.bluetooth) { alert('Web Bluetooth requires Chrome or Edge.'); return; }
+    logMbEvent('Requesting micro:bit device…');
     try {
         mbDevice = await navigator.bluetooth.requestDevice({
             filters: [{ namePrefix: 'BBC micro:bit' }],
             optionalServices: [MB_LED_SERVICE, MB_BTN_SERVICE, MB_TEMP_SERVICE]
         });
+        logMbEvent('Device selected: ' + (mbDevice.name || mbDevice.id), 'ok');
+        renderMbDeviceInfo();
         mbDevice.addEventListener('gattserverdisconnected', onMicrobitDisconnected);
+        logMbEvent('Connecting to GATT server…');
         const server = await mbDevice.gatt.connect();
+        logMbEvent('GATT connected.', 'ok');
 
         // Show controls immediately after GATT connects
         mbIsConnected = true;
@@ -638,8 +718,10 @@ async function connectMicrobit() {
             mbLedMatrixChar = await ledService.getCharacteristic(MB_LED_MATRIX_CHAR);
             mbLedTextChar   = await ledService.getCharacteristic(MB_LED_TEXT_CHAR);
             document.getElementById('mb-led-unavailable').style.display = 'none';
+            logMbEvent('LED service ready.', 'ok');
         } catch (_) {
             document.getElementById('mb-led-unavailable').style.display = 'block';
+            logMbEvent('LED service not available.', 'warn');
         }
 
         try {
@@ -649,7 +731,10 @@ async function connectMicrobit() {
             tempChar.addEventListener('characteristicvaluechanged', e => {
                 document.getElementById('mb-temp').textContent = e.target.value.getInt8(0) + '°C';
             });
-        } catch (_) {}
+            logMbEvent('Temperature service ready.', 'ok');
+        } catch (_) {
+            logMbEvent('Temperature service not available.', 'warn');
+        }
 
         try {
             const btnService = await server.getPrimaryService(MB_BTN_SERVICE);
@@ -661,18 +746,30 @@ async function connectMicrobit() {
                 document.getElementById('mb-btn-a').textContent = e.target.value.getUint8(0) ? 'Pressed' : 'Released');
             btnB.addEventListener('characteristicvaluechanged', e =>
                 document.getElementById('mb-btn-b').textContent = e.target.value.getUint8(0) ? 'Pressed' : 'Released');
-        } catch (_) {}
+            logMbEvent('Button service ready.', 'ok');
+        } catch (_) {
+            logMbEvent('Button service not available.', 'warn');
+        }
     } catch (e) {
         console.error(e);
-        if (e.name !== 'NotFoundError') alert('Could not connect to micro:bit: ' + e.message);
+        if (e.name === 'NotFoundError') {
+            logMbEvent('Device selection cancelled.', 'warn');
+        } else {
+            logMbEvent('Connection error: ' + e.message, 'err');
+            alert('Could not connect to micro:bit: ' + e.message);
+        }
     }
 }
 
 function disconnectMicrobit() {
-    if (mbDevice && mbDevice.gatt.connected) mbDevice.gatt.disconnect();
+    if (mbDevice && mbDevice.gatt.connected) {
+        logMbEvent('Disconnecting…');
+        mbDevice.gatt.disconnect();
+    }
 }
 
 function onMicrobitDisconnected() {
+    logMbEvent('micro:bit disconnected.', 'warn');
     mbIsConnected = false; mbDevice = null; mbLedMatrixChar = null; mbLedTextChar = null;
     updateMicrobitUI();
 }
