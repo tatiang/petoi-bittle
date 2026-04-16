@@ -248,6 +248,9 @@
             </div>
             <div class="microbit-section" id="mb-controls" style="display:none">
                 <h3>💡 LED Matrix</h3>
+                <div id="mb-led-unavailable" style="display:none; background:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:10px; margin-bottom:10px; font-size:0.9rem;">
+                    ⚠️ LED service not found. Make sure your MakeCode project includes the <strong>Bluetooth extension</strong> with the LED service enabled.
+                </div>
                 <div class="led-preset-row">
                     <button class="btn-led-preset" onclick="setLedPreset('heart')">❤️ Heart</button>
                     <button class="btn-led-preset" onclick="setLedPreset('tick')">✔ Checkmark</button>
@@ -626,9 +629,18 @@ async function connectMicrobit() {
         mbDevice.addEventListener('gattserverdisconnected', onMicrobitDisconnected);
         const server = await mbDevice.gatt.connect();
 
-        const ledService = await server.getPrimaryService(MB_LED_SERVICE);
-        mbLedMatrixChar = await ledService.getCharacteristic(MB_LED_MATRIX_CHAR);
-        mbLedTextChar   = await ledService.getCharacteristic(MB_LED_TEXT_CHAR);
+        // Show controls immediately after GATT connects
+        mbIsConnected = true;
+        updateMicrobitUI();
+
+        try {
+            const ledService = await server.getPrimaryService(MB_LED_SERVICE);
+            mbLedMatrixChar = await ledService.getCharacteristic(MB_LED_MATRIX_CHAR);
+            mbLedTextChar   = await ledService.getCharacteristic(MB_LED_TEXT_CHAR);
+            document.getElementById('mb-led-unavailable').style.display = 'none';
+        } catch (_) {
+            document.getElementById('mb-led-unavailable').style.display = 'block';
+        }
 
         try {
             const tempService = await server.getPrimaryService(MB_TEMP_SERVICE);
@@ -650,9 +662,6 @@ async function connectMicrobit() {
             btnB.addEventListener('characteristicvaluechanged', e =>
                 document.getElementById('mb-btn-b').textContent = e.target.value.getUint8(0) ? 'Pressed' : 'Released');
         } catch (_) {}
-
-        mbIsConnected = true;
-        updateMicrobitUI();
     } catch (e) {
         console.error(e);
         if (e.name !== 'NotFoundError') alert('Could not connect to micro:bit: ' + e.message);
