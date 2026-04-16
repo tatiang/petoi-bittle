@@ -263,6 +263,7 @@
             <!-- Sub-tab navigation -->
             <div class="mb-subtab-bar">
                 <button class="mb-subtab-btn active" id="mb-stab-controls" onclick="switchMbTab('controls')">🎮 Controls</button>
+                <button class="mb-subtab-btn" id="mb-stab-software" onclick="switchMbTab('software')">💾 Software</button>
                 <button class="mb-subtab-btn" id="mb-stab-log" onclick="switchMbTab('log')">📋 Connection Log</button>
             </div>
 
@@ -301,6 +302,48 @@
                             <div class="sensor-label">Button B</div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Software sub-tab -->
+            <div class="mb-subtab-pane" id="mb-pane-software">
+                <div class="microbit-section">
+                    <h3>💾 micro:bit Software Setup</h3>
+                    <p style="font-size:0.92rem;margin:0 0 14px;line-height:1.6">
+                        This app requires a Bluetooth-enabled program running on your micro:bit v2.
+                        Download the pre-built hex file below, then drag it onto the <strong>MICROBIT</strong> USB drive.
+                    </p>
+
+                    <!-- Primary download -->
+                    <div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:10px;padding:14px 16px;margin-bottom:14px">
+                        <div style="font-weight:bold;margin-bottom:6px;font-size:0.95rem">✅ Recommended: Bluetooth hex (LED + Buttons + Temperature)</div>
+                        <p style="font-size:0.85rem;margin:0 0 10px;color:#475569;line-height:1.5">
+                            No pairing required. Enables the LED matrix, scrolling text, Button A/B, and temperature sensor over Bluetooth.
+                            Source: <a href="https://kaspersmicrobit.readthedocs.io/en/stable/makecode-bluetooth/download-a-hex-file-without-pairing/" target="_blank" rel="noopener" style="color:#15803d">kaspersmicrobit docs</a>
+                        </p>
+                        <a class="btn btn-microbit"
+                           style="display:inline-block;text-decoration:none;padding:10px 20px;font-size:0.92rem"
+                           href="https://kaspersmicrobit.readthedocs.io/en/stable/assets/hex/microbit-bluetooth-accel-buttons-led-temp-no-pairing.hex"
+                           download>
+                            ⬇ Download hex file
+                        </a>
+                    </div>
+
+                    <!-- Fallback: build your own -->
+                    <details style="font-size:0.88rem;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px">
+                        <summary style="cursor:pointer;font-weight:bold;color:#334155">Or build your own in MakeCode</summary>
+                        <ol style="margin:10px 0 0 18px;line-height:1.9;color:#475569">
+                            <li>Open <a href="https://makecode.microbit.org/" target="_blank" rel="noopener">makecode.microbit.org</a> and create a new project.</li>
+                            <li>Click the gear icon → <strong>Extensions</strong> → search for <em>Bluetooth</em> and add it.</li>
+                            <li>In the gear icon → <strong>Project Settings</strong>, enable <em>No Pairing Required</em>.</li>
+                            <li>In the <strong>on start</strong> block, add:<br>
+                                <code style="background:#f1f5f9;padding:2px 5px;border-radius:4px">bluetooth start LED service</code><br>
+                                <code style="background:#f1f5f9;padding:2px 5px;border-radius:4px">bluetooth start button service</code><br>
+                                <code style="background:#f1f5f9;padding:2px 5px;border-radius:4px">bluetooth start temperature service</code>
+                            </li>
+                            <li>Click <strong>Download</strong> and copy the .hex file to the MICROBIT drive.</li>
+                        </ol>
+                    </details>
                 </div>
             </div>
 
