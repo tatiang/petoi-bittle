@@ -133,8 +133,8 @@
         .led-cell { width: 44px; height: 44px; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 50%; cursor: pointer; transition: 0.15s; }
         .led-cell.on { background: #ef4444; border-color: #b91c1c; box-shadow: 0 0 8px #ef4444; }
         .led-preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
-        .btn-led-preset { background: #1e293b; color: #fbbf24; border: none; border-radius: 8px; padding: 8px 14px; font-size: 1.3rem; cursor: pointer; transition: 0.2s; line-height: 1; }
-        .btn-led-preset:hover { background: #334155; transform: scale(1.08); }
+        .btn-led-preset { background: #1e293b; color: #fbbf24; border: none; border-radius: 8px; padding: 10px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; line-height: 1; }
+        .btn-led-preset:hover { background: #334155; transform: scale(1.05); }
         .led-text-row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
         .led-text-row input { flex-grow: 1; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
         .sensor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
@@ -248,14 +248,14 @@
             </div>
             <div class="microbit-section" id="mb-controls" style="display:none">
                 <h3>💡 LED Matrix</h3>
+                <div id="mb-led-unavailable" style="display:none; background:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:10px; margin-bottom:10px; font-size:0.9rem;">
+                    ⚠️ LED service not found. Make sure your MakeCode project includes the <strong>Bluetooth extension</strong> with the LED service enabled.
+                </div>
                 <div class="led-preset-row">
-                    <button class="btn-led-preset" onclick="setLedPreset('heart')" title="Heart">❤️</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('smile')" title="Smile">😊</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('sad')" title="Sad">😢</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('tick')" title="Tick / Yes">✅</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('cross')" title="Cross / No">❌</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('all')" title="All On">⬜</button>
-                    <button class="btn-led-preset" onclick="setLedPreset('clear')" title="Clear">⬛</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('heart')">❤️ Heart</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('tick')">✔ Checkmark</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('all')">⬜ All On</button>
+                    <button class="btn-led-preset" onclick="setLedPreset('clear')">⬛ All Off</button>
                 </div>
                 <div class="led-grid" id="led-grid"></div>
                 <div class="led-text-row">
@@ -629,9 +629,18 @@ async function connectMicrobit() {
         mbDevice.addEventListener('gattserverdisconnected', onMicrobitDisconnected);
         const server = await mbDevice.gatt.connect();
 
-        const ledService = await server.getPrimaryService(MB_LED_SERVICE);
-        mbLedMatrixChar = await ledService.getCharacteristic(MB_LED_MATRIX_CHAR);
-        mbLedTextChar   = await ledService.getCharacteristic(MB_LED_TEXT_CHAR);
+        // Show controls immediately after GATT connects
+        mbIsConnected = true;
+        updateMicrobitUI();
+
+        try {
+            const ledService = await server.getPrimaryService(MB_LED_SERVICE);
+            mbLedMatrixChar = await ledService.getCharacteristic(MB_LED_MATRIX_CHAR);
+            mbLedTextChar   = await ledService.getCharacteristic(MB_LED_TEXT_CHAR);
+            document.getElementById('mb-led-unavailable').style.display = 'none';
+        } catch (_) {
+            document.getElementById('mb-led-unavailable').style.display = 'block';
+        }
 
         try {
             const tempService = await server.getPrimaryService(MB_TEMP_SERVICE);
@@ -653,9 +662,6 @@ async function connectMicrobit() {
             btnB.addEventListener('characteristicvaluechanged', e =>
                 document.getElementById('mb-btn-b').textContent = e.target.value.getUint8(0) ? 'Pressed' : 'Released');
         } catch (_) {}
-
-        mbIsConnected = true;
-        updateMicrobitUI();
     } catch (e) {
         console.error(e);
         if (e.name !== 'NotFoundError') alert('Could not connect to micro:bit: ' + e.message);
